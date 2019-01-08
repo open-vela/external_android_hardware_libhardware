@@ -6,11 +6,14 @@
 #ifndef HAL_USB_FRAME_BUFFER_H_
 #define HAL_USB_FRAME_BUFFER_H_
 
-#include <cstdint>
+#include <stdint.h>
+
 #include <memory>
+#include <string>
 
 #include <base/files/scoped_file.h>
 #include <base/synchronization/lock.h>
+
 #include <hardware/gralloc.h>
 
 namespace arc {

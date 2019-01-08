@@ -14,16 +14,15 @@
  * limitations under the License.
  */
 
-#include "partial_metadata_factory.h"
-
 #include <camera/CameraMetadata.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include "../v4l2_wrapper_mock.h"
 #include "converter_interface_mock.h"
 #include "metadata_common.h"
+#include "partial_metadata_factory.h"
 #include "test_common.h"
-#include "v4l2_wrapper_mock.h"
 
 using testing::AtMost;
 using testing::Expectation;

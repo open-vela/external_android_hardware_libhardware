@@ -21,6 +21,8 @@
 
 #include <utils/Thread.h>
 
+#include "common.h"
+
 namespace v4l2_camera_hal {
 
 class FunctionThread : public android::Thread {
