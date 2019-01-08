@@ -17,6 +17,8 @@
 #ifndef V4L2_CAMERA_HAL_METADATA_DEFAULT_OPTION_DELEGATE_H_
 #define V4L2_CAMERA_HAL_METADATA_DEFAULT_OPTION_DELEGATE_H_
 
+#include <errno.h>
+
 #include <map>
 
 #include <hardware/camera3.h>

@@ -17,12 +17,13 @@
 #ifndef V4L2_CAMERA_HAL_METADATA_MAP_CONVERTER_H_
 #define V4L2_CAMERA_HAL_METADATA_MAP_CONVERTER_H_
 
-#include <cerrno>
+#include <errno.h>
+
 #include <map>
 #include <memory>
 
 #include <android-base/macros.h>
-#include "common.h"
+
 #include "converter_interface.h"
 
 namespace v4l2_camera_hal {

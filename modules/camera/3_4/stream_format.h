@@ -17,10 +17,12 @@
 #ifndef V4L2_CAMERA_HAL_STREAM_FORMAT_H_
 #define V4L2_CAMERA_HAL_STREAM_FORMAT_H_
 
-#include <cstring>
+#include <string.h>
 
 #include <linux/videodev2.h>
+
 #include "arc/common_types.h"
+#include "common.h"
 
 namespace v4l2_camera_hal {
 
