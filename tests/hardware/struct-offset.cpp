@@ -216,9 +216,7 @@ void CheckOffsets(void) {
     CHECK_MEMBER_AT(camera_module_t, open_legacy, 144, 280);
     CHECK_MEMBER_AT(camera_module_t, set_torch_mode, 148, 288);
     CHECK_MEMBER_AT(camera_module_t, init, 152, 296);
-    CHECK_MEMBER_AT(camera_module_t, get_physical_camera_info, 156, 304);
-    CHECK_MEMBER_AT(camera_module_t, is_stream_combination_supported, 160, 312);
-    CHECK_MEMBER_AT(camera_module_t, reserved, 164, 320);
+    CHECK_MEMBER_AT(camera_module_t, reserved, 156, 304);
 
     //Types defined in camera3.h
     CHECK_MEMBER_AT(camera3_device_ops_t, initialize, 0, 0);
@@ -229,7 +227,6 @@ void CheckOffsets(void) {
     CHECK_MEMBER_AT(camera3_device_ops_t, get_metadata_vendor_tag_ops, 20, 40);
     CHECK_MEMBER_AT(camera3_device_ops_t, dump, 24, 48);
     CHECK_MEMBER_AT(camera3_device_ops_t, flush, 28, 56);
-    CHECK_MEMBER_AT(camera3_device_ops_t, signal_stream_flush, 32, 64);
-    CHECK_MEMBER_AT(camera3_device_ops_t, reserved, 36, 72);
+    CHECK_MEMBER_AT(camera3_device_ops_t, reserved, 32, 64);
 }
 
