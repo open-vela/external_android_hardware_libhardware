@@ -40,6 +40,8 @@ LOCAL_SHARED_LIBRARIES := \
     liblog \
     libutils \
 
+LOCAL_STRIP_MODULE := false
+
 include $(BUILD_SHARED_LIBRARY)
 
 endif # USE_SENSOR_MULTI_HAL
