@@ -821,22 +821,12 @@ static ssize_t out_write(struct audio_stream_out *stream, const void* buffer,
         return 0;
     }
 
-    // If the write to the sink would block, flush enough frames
+    // If the write to the sink would block when no input stream is present, flush enough frames
     // from the pipe to make space to write the most recent data.
-    // We DO NOT block if:
-    // - no peer input stream is present
-    // - the peer input is in standby AFTER having been active.
-    // We DO block if:
-    // - the input was never activated to avoid discarding first frames
-    // in the pipe in case capture start was delayed
     {
         const size_t availableToWrite = sink->availableToWrite();
-        // NOTE: rsxSink has been checked above and sink and source life cycles are synchronized
         sp<MonoPipeReader> source = rsxadev->routes[out->route_handle].rsxSource;
-        const struct submix_stream_in *in = rsxadev->routes[out->route_handle].input;
-        const bool dont_block = (in == NULL)
-                || (in->input_standby && (in->read_counter_frames != 0));
-        if (dont_block && availableToWrite < frames) {
+        if (rsxadev->routes[out->route_handle].input == NULL && availableToWrite < frames) {
             static uint8_t flush_buffer[64];
             const size_t flushBufferSizeFrames = sizeof(flush_buffer) / frame_size;
             size_t frames_to_flush_from_source = frames - availableToWrite;
@@ -906,14 +896,8 @@ static int out_get_presentation_position(const struct audio_stream_out *stream,
 
     int ret = -EWOULDBLOCK;
     pthread_mutex_lock(&rsxadev->lock);
-    sp<MonoPipeReader> source = rsxadev->routes[out->route_handle].rsxSource;
-    if (source == NULL) {
-        ALOGW("%s called on released output", __FUNCTION__);
-        pthread_mutex_unlock(&rsxadev->lock);
-        return -ENODEV;
-    }
-
-    const ssize_t frames_in_pipe = source->availableToRead();
+    const ssize_t frames_in_pipe =
+            rsxadev->routes[out->route_handle].rsxSource->availableToRead();
     if (CC_UNLIKELY(frames_in_pipe < 0)) {
         *frames = out->frames_written;
         ret = 0;
@@ -946,14 +930,8 @@ static int out_get_render_position(const struct audio_stream_out *stream,
     struct submix_audio_device * const rsxadev = out->dev;
 
     pthread_mutex_lock(&rsxadev->lock);
-    sp<MonoPipeReader> source = rsxadev->routes[out->route_handle].rsxSource;
-    if (source == NULL) {
-        ALOGW("%s called on released output", __FUNCTION__);
-        pthread_mutex_unlock(&rsxadev->lock);
-        return -ENODEV;
-    }
-
-    const ssize_t frames_in_pipe = source->availableToRead();
+    const ssize_t frames_in_pipe =
+            rsxadev->routes[out->route_handle].rsxSource->availableToRead();
     if (CC_UNLIKELY(frames_in_pipe < 0)) {
         *dsp_frames = (uint32_t)out->frames_written_since_standby;
     } else {
