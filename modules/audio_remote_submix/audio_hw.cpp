@@ -24,13 +24,11 @@
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/limits.h>
-#include <unistd.h>
 
 #include <cutils/compiler.h>
+#include <cutils/log.h>
 #include <cutils/properties.h>
 #include <cutils/str_parms.h>
-#include <log/log.h>
-#include <utils/String8.h>
 
 #include <hardware/audio.h>
 #include <hardware/hardware.h>
@@ -40,6 +38,8 @@
 #include <media/AudioBufferProvider.h>
 #include <media/nbaio/MonoPipe.h>
 #include <media/nbaio/MonoPipeReader.h>
+
+#include <utils/String8.h>
 
 #define LOG_STREAMS_TO_FILES 0
 #if LOG_STREAMS_TO_FILES
@@ -52,9 +52,9 @@ extern "C" {
 
 namespace android {
 
-// Uncomment to enable extremely verbose logging in this module.
-// #define SUBMIX_VERBOSE_LOGGING
-#if defined(SUBMIX_VERBOSE_LOGGING)
+// Set to 1 to enable extremely verbose logging in this module.
+#define SUBMIX_VERBOSE_LOGGING 0
+#if SUBMIX_VERBOSE_LOGGING
 #define SUBMIX_ALOGV(...) ALOGV(__VA_ARGS__)
 #define SUBMIX_ALOGE(...) ALOGE(__VA_ARGS__)
 #else
@@ -205,7 +205,7 @@ struct submix_stream_in {
     int log_fd;
 #endif // LOG_STREAMS_TO_FILES
 
-    volatile uint16_t read_error_count;
+    volatile int16_t read_error_count;
 };
 
 // Determine whether the specified sample rate is supported by the submix module.
@@ -467,12 +467,14 @@ static void submix_audio_device_release_pipe_l(struct submix_audio_device * cons
             rsxadev->routes[route_idx].address);
     if (rsxadev->routes[route_idx].rsxSink != 0) {
         rsxadev->routes[route_idx].rsxSink.clear();
+        rsxadev->routes[route_idx].rsxSink = 0;
     }
     if (rsxadev->routes[route_idx].rsxSource != 0) {
         rsxadev->routes[route_idx].rsxSource.clear();
+        rsxadev->routes[route_idx].rsxSource = 0;
     }
     memset(rsxadev->routes[route_idx].address, 0, AUDIO_DEVICE_MAX_ADDRESS_LEN);
-#if ENABLE_RESAMPLING
+#ifdef ENABLE_RESAMPLING
     memset(rsxadev->routes[route_idx].resampler_buffer, 0,
             sizeof(int16_t) * DEFAULT_PIPE_SIZE_IN_FRAMES);
 #endif
@@ -485,31 +487,21 @@ static void submix_audio_device_destroy_pipe_l(struct submix_audio_device * cons
                                              const struct submix_stream_in * const in,
                                              const struct submix_stream_out * const out)
 {
+    MonoPipe* sink;
     ALOGV("submix_audio_device_destroy_pipe_l()");
     int route_idx = -1;
     if (in != NULL) {
-        bool shut_down = false;
 #if ENABLE_LEGACY_INPUT_OPEN
         const_cast<struct submix_stream_in*>(in)->ref_count--;
         route_idx = in->route_handle;
         ALOG_ASSERT(rsxadev->routes[route_idx].input == in);
         if (in->ref_count == 0) {
             rsxadev->routes[route_idx].input = NULL;
-            shut_down = true;
         }
         ALOGV("submix_audio_device_destroy_pipe_l(): input ref_count %d", in->ref_count);
 #else
-        route_idx = in->route_handle;
-        ALOG_ASSERT(rsxadev->routes[route_idx].input == in);
-        rsxadev->routes[route_idx].input = NULL;
-        shut_down = true;
+        rsxadev->input = NULL;
 #endif // ENABLE_LEGACY_INPUT_OPEN
-        if (shut_down) {
-            sp <MonoPipe> sink = rsxadev->routes[in->route_handle].rsxSink;
-            if (sink != NULL) {
-              sink->shutdown(true);
-            }
-        }
     }
     if (out != NULL) {
         route_idx = out->route_handle;
@@ -807,11 +799,6 @@ static ssize_t out_write(struct audio_stream_out *stream, const void* buffer,
             // the pipe has already been shutdown, this buffer will be lost but we must
             //   simulate timing so we don't drain the output faster than realtime
             usleep(frames * 1000000 / out_get_sample_rate(&stream->common));
-
-            pthread_mutex_lock(&rsxadev->lock);
-            out->frames_written += frames;
-            out->frames_written_since_standby += frames;
-            pthread_mutex_unlock(&rsxadev->lock);
             return bytes;
         }
     } else {
@@ -821,27 +808,17 @@ static ssize_t out_write(struct audio_stream_out *stream, const void* buffer,
         return 0;
     }
 
-    // If the write to the sink would block, flush enough frames
+    // If the write to the sink would block when no input stream is present, flush enough frames
     // from the pipe to make space to write the most recent data.
-    // We DO NOT block if:
-    // - no peer input stream is present
-    // - the peer input is in standby AFTER having been active.
-    // We DO block if:
-    // - the input was never activated to avoid discarding first frames
-    // in the pipe in case capture start was delayed
     {
         const size_t availableToWrite = sink->availableToWrite();
-        // NOTE: rsxSink has been checked above and sink and source life cycles are synchronized
         sp<MonoPipeReader> source = rsxadev->routes[out->route_handle].rsxSource;
-        const struct submix_stream_in *in = rsxadev->routes[out->route_handle].input;
-        const bool dont_block = (in == NULL)
-                || (in->input_standby && (in->read_counter_frames != 0));
-        if (dont_block && availableToWrite < frames) {
+        if (rsxadev->routes[out->route_handle].input == NULL && availableToWrite < frames) {
             static uint8_t flush_buffer[64];
             const size_t flushBufferSizeFrames = sizeof(flush_buffer) / frame_size;
             size_t frames_to_flush_from_source = frames - availableToWrite;
-            SUBMIX_ALOGV("out_write(): flushing %llu frames from the pipe to avoid blocking",
-                    (unsigned long long)frames_to_flush_from_source);
+            SUBMIX_ALOGV("out_write(): flushing %d frames from the pipe to avoid blocking",
+                         frames_to_flush_from_source);
             while (frames_to_flush_from_source) {
                 const size_t flush_size = min(frames_to_flush_from_source, flushBufferSizeFrames);
                 frames_to_flush_from_source -= flush_size;
@@ -906,14 +883,8 @@ static int out_get_presentation_position(const struct audio_stream_out *stream,
 
     int ret = -EWOULDBLOCK;
     pthread_mutex_lock(&rsxadev->lock);
-    sp<MonoPipeReader> source = rsxadev->routes[out->route_handle].rsxSource;
-    if (source == NULL) {
-        ALOGW("%s called on released output", __FUNCTION__);
-        pthread_mutex_unlock(&rsxadev->lock);
-        return -ENODEV;
-    }
-
-    const ssize_t frames_in_pipe = source->availableToRead();
+    const ssize_t frames_in_pipe =
+            rsxadev->routes[out->route_handle].rsxSource->availableToRead();
     if (CC_UNLIKELY(frames_in_pipe < 0)) {
         *frames = out->frames_written;
         ret = 0;
@@ -928,8 +899,7 @@ static int out_get_presentation_position(const struct audio_stream_out *stream,
     }
 
     SUBMIX_ALOGV("out_get_presentation_position() got frames=%llu timestamp sec=%llu",
-            frames ? (unsigned long long)*frames : -1ULL,
-            timestamp ? (unsigned long long)timestamp->tv_sec : -1ULL);
+            frames ? *frames : -1, timestamp ? timestamp->tv_sec : -1);
 
     return ret;
 }
@@ -946,14 +916,8 @@ static int out_get_render_position(const struct audio_stream_out *stream,
     struct submix_audio_device * const rsxadev = out->dev;
 
     pthread_mutex_lock(&rsxadev->lock);
-    sp<MonoPipeReader> source = rsxadev->routes[out->route_handle].rsxSource;
-    if (source == NULL) {
-        ALOGW("%s called on released output", __FUNCTION__);
-        pthread_mutex_unlock(&rsxadev->lock);
-        return -ENODEV;
-    }
-
-    const ssize_t frames_in_pipe = source->availableToRead();
+    const ssize_t frames_in_pipe =
+            rsxadev->routes[out->route_handle].rsxSource->availableToRead();
     if (CC_UNLIKELY(frames_in_pipe < 0)) {
         *dsp_frames = (uint32_t)out->frames_written_since_standby;
     } else {
@@ -984,7 +948,7 @@ static int out_get_next_write_timestamp(const struct audio_stream_out *stream,
 {
     (void)stream;
     (void)timestamp;
-    return -ENOSYS;
+    return -EINVAL;
 }
 
 /** audio_stream_in implementation **/
@@ -1123,6 +1087,7 @@ static ssize_t in_read(struct audio_stream_in *stream, void* buffer,
 {
     struct submix_stream_in * const in = audio_stream_in_get_submix_stream_in(stream);
     struct submix_audio_device * const rsxadev = in->dev;
+    struct audio_config *format;
     const size_t frame_size = audio_stream_in_frame_size(stream);
     const size_t frames_to_read = bytes / frame_size;
 
@@ -1576,12 +1541,9 @@ static size_t adev_get_input_buffer_size(const struct audio_hw_device *dev,
         }
         const size_t frame_size_in_bytes = audio_channel_count_from_in_mask(config->channel_mask) *
                 audio_bytes_per_sample(config->format);
-        if (max_buffer_period_size_frames == 0) {
-            max_buffer_period_size_frames = DEFAULT_PIPE_SIZE_IN_FRAMES;
-        }
         const size_t buffer_size = max_buffer_period_size_frames * frame_size_in_bytes;
         SUBMIX_ALOGV("adev_get_input_buffer_size() returns %zu bytes, %zu frames",
-                 buffer_size, max_buffer_period_size_frames);
+                 buffer_size, buffer_period_size_frames);
         return buffer_size;
     }
     return 0;
@@ -1650,9 +1612,7 @@ static int adev_open_input_stream(struct audio_hw_device *dev,
     if (!in) {
         in = (struct submix_stream_in *)calloc(1, sizeof(struct submix_stream_in));
         if (!in) return -ENOMEM;
-#if ENABLE_LEGACY_INPUT_OPEN
         in->ref_count = 1;
-#endif
 
         // Initialize the function pointer tables (v-tables).
         in->stream.common.get_sample_rate = in_get_sample_rate;
@@ -1691,12 +1651,6 @@ static int adev_open_input_stream(struct audio_hw_device *dev,
     ALOGV("adev_open_input_stream(): about to create pipe");
     submix_audio_device_create_pipe_l(rsxadev, config, DEFAULT_PIPE_SIZE_IN_FRAMES,
                                     DEFAULT_PIPE_PERIOD_COUNT, in, NULL, address, route_idx);
-
-    sp <MonoPipe> sink = rsxadev->routes[route_idx].rsxSink;
-    if (sink != NULL) {
-        sink->shutdown(false);
-    }
-
 #if LOG_STREAMS_TO_FILES
     if (in->log_fd >= 0) close(in->log_fd);
     in->log_fd = open(LOG_STREAM_IN_FILENAME, O_CREAT | O_TRUNC | O_WRONLY,
@@ -1740,19 +1694,13 @@ static int adev_dump(const audio_hw_device_t *device, int fd)
                     reinterpret_cast<const uint8_t *>(device) -
                             offsetof(struct submix_audio_device, device));
     char msg[100];
-    int n = snprintf(msg, sizeof(msg), "\nReroute submix audio module:\n");
+    int n = sprintf(msg, "\nReroute submix audio module:\n");
     write(fd, &msg, n);
     for (int i=0 ; i < MAX_ROUTES ; i++) {
-#if ENABLE_RESAMPLING
-        n = snprintf(msg, sizeof(msg), " route[%d] rate in=%d out=%d, addr=[%s]\n", i,
+        n = sprintf(msg, " route[%d] rate in=%d out=%d, addr=[%s]\n", i,
                 rsxadev->routes[i].config.input_sample_rate,
                 rsxadev->routes[i].config.output_sample_rate,
                 rsxadev->routes[i].address);
-#else
-        n = snprintf(msg, sizeof(msg), " route[%d], rate=%d addr=[%s]\n", i,
-                rsxadev->routes[i].config.common.sample_rate,
-                rsxadev->routes[i].address);
-#endif
         write(fd, &msg, n);
     }
     return 0;

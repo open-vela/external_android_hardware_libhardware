@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-#include <hardware/hardware.h>
 #include <hardware/vibrator.h>
+#include <hardware/hardware.h>
 
-#include <errno.h>
-#include <fcntl.h>
+#include <cutils/log.h>
+
 #include <malloc.h>
-#include <math.h>
-#include <stdbool.h>
 #include <stdio.h>
+#include <stdbool.h>
 #include <string.h>
 #include <unistd.h>
-
-#include <log/log.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <math.h>
 
 #define TIMEOUT_STR_LEN         20
 
@@ -108,6 +108,7 @@ static int write_led_file(const char *file, const char *value)
 
 static bool vibra_led_exists()
 {
+    int fd;
     char file_str[50];
 
     snprintf(file_str, sizeof(file_str), "%s/%s", LED_DEVICE, "activate");
