@@ -22,8 +22,7 @@
 #ifndef ANDROID_AUDIO_ALSAOPS_H
 #define ANDROID_AUDIO_ALSAOPS_H
 
-#include <log/log.h>
-
+#include <cutils/log.h>
 #include <system/audio.h>
 #include <tinyalsa/asoundlib.h>
 

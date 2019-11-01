@@ -24,15 +24,12 @@
 #include <errno.h>
 #include <limits.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <unistd.h>
 
 #define LOG_TAG "HAL"
 #include <log/log.h>
 
-#if !defined(__ANDROID_RECOVERY__)
 #include <vndksupport/linker.h>
-#endif
 
 /** Base path of the hal modules */
 #if defined(__LP64__)
@@ -79,29 +76,19 @@ static int load(const char *id,
     int status = -EINVAL;
     void *handle = NULL;
     struct hw_module_t *hmi = NULL;
-#ifdef __ANDROID_VNDK__
-    const bool try_system = false;
-#else
-    const bool try_system = true;
-#endif
 
     /*
      * load the symbols resolving undefined symbols before
      * dlopen returns. Since RTLD_GLOBAL is not or'd in with
      * RTLD_NOW the external symbols will not be global
      */
-    if (try_system &&
-        strncmp(path, HAL_LIBRARY_PATH1, strlen(HAL_LIBRARY_PATH1)) == 0) {
+    if (strncmp(path, "/system/", 8) == 0) {
         /* If the library is in system partition, no need to check
          * sphal namespace. Open it with dlopen.
          */
         handle = dlopen(path, RTLD_NOW);
     } else {
-#if defined(__ANDROID_RECOVERY__)
-        handle = dlopen(path, RTLD_NOW);
-#else
         handle = android_load_sphal_library(path, RTLD_NOW);
-#endif
     }
     if (handle == NULL) {
         char const *err_str = dlerror();
@@ -140,31 +127,12 @@ static int load(const char *id,
         }
     } else {
         ALOGV("loaded HAL id=%s path=%s hmi=%p handle=%p",
-                id, path, hmi, handle);
+                id, path, *pHmi, handle);
     }
 
     *pHmi = hmi;
 
     return status;
-}
-
-/*
- * If path is in in_path.
- */
-static bool path_in_path(const char *path, const char *in_path) {
-    char real_path[PATH_MAX];
-    if (realpath(path, real_path) == NULL) return false;
-
-    char real_in_path[PATH_MAX];
-    if (realpath(in_path, real_in_path) == NULL) return false;
-
-    const size_t real_in_path_len = strlen(real_in_path);
-    if (strncmp(real_path, real_in_path, real_in_path_len) != 0) {
-        return false;
-    }
-
-    return strlen(real_path) > real_in_path_len &&
-        real_path[real_in_path_len] == '/';
 }
 
 /*
@@ -176,20 +144,18 @@ static int hw_module_exists(char *path, size_t path_len, const char *name,
 {
     snprintf(path, path_len, "%s/%s.%s.so",
              HAL_LIBRARY_PATH3, name, subname);
-    if (path_in_path(path, HAL_LIBRARY_PATH3) && access(path, R_OK) == 0)
+    if (access(path, R_OK) == 0)
         return 0;
 
     snprintf(path, path_len, "%s/%s.%s.so",
              HAL_LIBRARY_PATH2, name, subname);
-    if (path_in_path(path, HAL_LIBRARY_PATH2) && access(path, R_OK) == 0)
+    if (access(path, R_OK) == 0)
         return 0;
 
-#ifndef __ANDROID_VNDK__
     snprintf(path, path_len, "%s/%s.%s.so",
              HAL_LIBRARY_PATH1, name, subname);
-    if (path_in_path(path, HAL_LIBRARY_PATH1) && access(path, R_OK) == 0)
+    if (access(path, R_OK) == 0)
         return 0;
-#endif
 
     return -ENOENT;
 }

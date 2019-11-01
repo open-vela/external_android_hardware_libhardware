@@ -17,13 +17,10 @@
 
 #include <errno.h>
 #include <malloc.h>
-#include <stdint.h>
 #include <string.h>
-
-#include <log/log.h>
-
-#include <hardware/fingerprint.h>
+#include <cutils/log.h>
 #include <hardware/hardware.h>
+#include <hardware/fingerprint.h>
 
 static int fingerprint_close(hw_device_t *dev)
 {
