@@ -73,6 +73,7 @@ typedef enum {
     HWC2_CALLBACK_HOTPLUG = 1,
     HWC2_CALLBACK_REFRESH = 2,
     HWC2_CALLBACK_VSYNC = 3,
+    HWC2_CALLBACK_VSYNC_2_4 = 4,
 } hwc2_callback_descriptor_t;
 
 /* Optional capabilities which may be supported by some devices. The particular
@@ -203,6 +204,12 @@ typedef enum {
     HWC2_DISPLAY_TYPE_VIRTUAL = 2,
 } hwc2_display_type_t;
 
+/* Physical display types returned by getDisplayConnectionType */
+typedef enum {
+    HWC2_DISPLAY_CONNECTION_TYPE_INTERNAL = 0,
+    HWC2_DISPLAY_CONNECTION_TYPE_EXTERNAL = 1,
+} hwc2_display_connection_type_t;
+
 /* Return codes from all functions */
 typedef enum {
     HWC2_ERROR_NONE = 0,
@@ -214,6 +221,8 @@ typedef enum {
     HWC2_ERROR_NO_RESOURCES,
     HWC2_ERROR_NOT_VALIDATED,
     HWC2_ERROR_UNSUPPORTED,
+    HWC2_ERROR_BAD_VSYNC_PERIOD,
+    HWC2_ERROR_SEAMLESS_NOT_POSSIBLE,
 } hwc2_error_t;
 
 /* Function descriptors for use with getFunction */
@@ -282,6 +291,12 @@ typedef enum {
     HWC2_FUNCTION_SET_LAYER_PER_FRAME_METADATA_BLOBS,
     HWC2_FUNCTION_GET_DISPLAY_BRIGHTNESS_SUPPORT,
     HWC2_FUNCTION_SET_DISPLAY_BRIGHTNESS,
+
+    // composer 2.4
+    HWC2_FUNCTION_GET_DISPLAY_CONNECTION_TYPE,
+    HWC2_FUNCTION_GET_SUPPORTED_DISPLAY_VSYNC_PERIODS,
+    HWC2_FUNCTION_GET_DISPLAY_VSYNC_PERIOD,
+    HWC2_FUNCTION_SET_ACTIVE_CONFIG_AND_VSYNC_PERIOD,
 } hwc2_function_descriptor_t;
 
 /* Layer requests returned from getDisplayRequests */
@@ -509,6 +524,14 @@ static inline const char* getDisplayTypeName(hwc2_display_type_t type) {
     }
 }
 
+static inline const char* getDisplayConnectionTypeName(hwc2_display_connection_type_t type) {
+    switch (type) {
+        case HWC2_DISPLAY_CONNECTION_TYPE_INTERNAL: return "Internal";
+        case HWC2_DISPLAY_CONNECTION_TYPE_EXTERNAL: return "External";
+        default: return "Unknown";
+    }
+}
+
 static inline const char* getErrorName(hwc2_error_t error) {
     switch (error) {
         case HWC2_ERROR_NONE: return "None";
@@ -520,6 +543,8 @@ static inline const char* getErrorName(hwc2_error_t error) {
         case HWC2_ERROR_NO_RESOURCES: return "NoResources";
         case HWC2_ERROR_NOT_VALIDATED: return "NotValidated";
         case HWC2_ERROR_UNSUPPORTED: return "Unsupported";
+        case HWC2_ERROR_BAD_VSYNC_PERIOD: return "BadVsyncPeriod";
+        case HWC2_ERROR_SEAMLESS_NOT_POSSIBLE: return "SeamlessNotPossible";
         default: return "Unknown";
     }
 }
@@ -602,6 +627,13 @@ static inline const char* getFunctionDescriptorName(
         case HWC2_FUNCTION_SET_LAYER_PER_FRAME_METADATA_BLOBS: return "SetLayerPerFrameMetadataBlobs";
         case HWC2_FUNCTION_GET_DISPLAY_BRIGHTNESS_SUPPORT: return "GetDisplayBrightnessSupport";
         case HWC2_FUNCTION_SET_DISPLAY_BRIGHTNESS: return "SetDisplayBrightness";
+
+        // composer 2.4
+        case HWC2_FUNCTION_GET_DISPLAY_CONNECTION_TYPE: return "GetDisplayConnectionType";
+        case HWC2_FUNCTION_GET_SUPPORTED_DISPLAY_VSYNC_PERIODS: return "getSupportedDisplayVsyncPeriods";
+        case HWC2_FUNCTION_GET_DISPLAY_VSYNC_PERIOD: return "getDisplayVsyncPeriod";
+        case HWC2_FUNCTION_SET_ACTIVE_CONFIG_AND_VSYNC_PERIOD: return "setActiveConfigAndVsyncPeriod";
+
         default: return "Unknown";
     }
 }
@@ -724,6 +756,7 @@ enum class Callback : int32_t {
     Hotplug = HWC2_CALLBACK_HOTPLUG,
     Refresh = HWC2_CALLBACK_REFRESH,
     Vsync = HWC2_CALLBACK_VSYNC,
+    Vsync_2_4 = HWC2_CALLBACK_VSYNC_2_4,
 };
 TO_STRING(hwc2_callback_descriptor_t, Callback, getCallbackDescriptorName)
 
@@ -767,6 +800,12 @@ enum class DisplayType : int32_t {
 };
 TO_STRING(hwc2_display_type_t, DisplayType, getDisplayTypeName)
 
+enum class DisplayConnectionType : uint32_t {
+    Internal = HWC2_DISPLAY_CONNECTION_TYPE_INTERNAL,
+    External = HWC2_DISPLAY_CONNECTION_TYPE_EXTERNAL,
+};
+TO_STRING(hwc2_display_connection_type_t, DisplayConnectionType, getDisplayConnectionTypeName)
+
 enum class Error : int32_t {
     None = HWC2_ERROR_NONE,
     BadConfig = HWC2_ERROR_BAD_CONFIG,
@@ -777,6 +816,8 @@ enum class Error : int32_t {
     NoResources = HWC2_ERROR_NO_RESOURCES,
     NotValidated = HWC2_ERROR_NOT_VALIDATED,
     Unsupported = HWC2_ERROR_UNSUPPORTED,
+    BadVsyncPeriod = HWC2_ERROR_BAD_VSYNC_PERIOD,
+    SeamlessNotPossible = HWC2_ERROR_SEAMLESS_NOT_POSSIBLE,
 };
 TO_STRING(hwc2_error_t, Error, getErrorName)
 
@@ -845,6 +886,13 @@ enum class FunctionDescriptor : int32_t {
     SetLayerPerFrameMetadataBlobs = HWC2_FUNCTION_SET_LAYER_PER_FRAME_METADATA_BLOBS,
     GetDisplayBrightnessSupport = HWC2_FUNCTION_GET_DISPLAY_BRIGHTNESS_SUPPORT,
     SetDisplayBrightness = HWC2_FUNCTION_SET_DISPLAY_BRIGHTNESS,
+
+    // composer 2.4
+    GetDisplayConnectionType = HWC2_FUNCTION_GET_DISPLAY_CONNECTION_TYPE,
+    getSupportedDisplayVsyncPeriods = HWC2_FUNCTION_GET_SUPPORTED_DISPLAY_VSYNC_PERIODS,
+    getDisplayVsyncPeriod = HWC2_FUNCTION_GET_DISPLAY_VSYNC_PERIOD,
+    setActiveConfigAndVsyncPeriod = HWC2_FUNCTION_SET_ACTIVE_CONFIG_AND_VSYNC_PERIOD,
+
 };
 TO_STRING(hwc2_function_descriptor_t, FunctionDescriptor,
         getFunctionDescriptorName)
@@ -904,6 +952,7 @@ typedef void* hwc2_callback_data_t;
 typedef uint32_t hwc2_config_t;
 typedef uint64_t hwc2_display_t;
 typedef uint64_t hwc2_layer_t;
+typedef uint32_t hwc2_vsync_period_t;
 
 /*
  * Device Struct
@@ -1029,6 +1078,28 @@ typedef void (*HWC2_PFN_REFRESH)(hwc2_callback_data_t callbackData,
  */
 typedef void (*HWC2_PFN_VSYNC)(hwc2_callback_data_t callbackData,
         hwc2_display_t display, int64_t timestamp);
+
+/* vsync_2_4(..., display, timestamp, vsyncPeriodNanos)
+ * Descriptor: HWC2_CALLBACK_VSYNC_2_4
+ * Required for HWC2 devices for composer 2.4
+ *
+ * Notifies the client that a vsync event has occurred. This callback must
+ * only be triggered when vsync is enabled for this display (through
+ * setVsyncEnabled).
+ *
+ * This callback should be triggered from a thread of at least
+ * HAL_PRIORITY_URGENT_DISPLAY with as little latency as possible, typically
+ * less than 0.5 ms. This thread is guaranteed not to call back into the device.
+ *
+ * Parameters:
+ *   display - the display which has received a vsync event
+ *   timestamp - the CLOCK_MONOTONIC time at which the vsync event occurred, in
+ *       nanoseconds
+ *   vsyncPeriodNanos - the display vsync period in nanoseconds i.e. the next onVsync2_4 is
+ *   expected to be called vsyncPeriod nanoseconds after this call.
+ */
+typedef void (*HWC2_PFN_VSYNC_2_4)(hwc2_callback_data_t callbackData,
+        hwc2_display_t display, int64_t timestamp, hwc2_vsync_period_t vsyncPeriodNanos);
 
 /*
  * Device Functions
@@ -2726,6 +2797,108 @@ typedef int32_t /*hwc_error_t*/ (*HWC2_PFN_GET_DISPLAY_BRIGHTNESS_SUPPORT)(hwc2_
  */
 typedef int32_t /*hwc_error_t*/ (*HWC2_PFN_SET_DISPLAY_BRIGHTNESS)(hwc2_device_t* device,
         hwc2_display_t display, float brightness);
+
+/* getDisplayConnectionType(..., outType)
+ * Descriptor: HWC2_FUNCTION_GET_DISPLAY_CONNECTION_TYPE
+ * Optional for all HWC2 devices
+ *
+ * Returns whether the given physical display is internal or external.
+ *
+ * Parameters:
+ *   outType - the connection type of the display; pointer will be non-NULL
+ *
+ * Returns HWC2_ERROR_NONE or one of the following errors:
+ *   HWC2_ERROR_BAD_DISPLAY when the display is invalid or virtual.
+ */
+typedef int32_t /*hwc2_error_t*/ (*HWC2_PFN_GET_DISPLAY_CONNECTION_TYPE)(
+        hwc2_device_t* device, hwc2_display_t display,
+        uint32_t* /*hwc2_display_connection_type_t*/ outType);
+
+/* getSupportedDisplayVsyncPeriods(..., outNumVsyncPeriods, outVsyncPeriods)
+ * Descriptor: HWC2_FUNCTION_GET_SUPPORTED_DISPLAY_VSYNC_PERIODS
+ * Required for HWC2 devices for composer 2.4
+ *
+ * Returns a array of supported vsync periods the display can refresh at a given configuration.
+ *
+ * outVsyncPeriods may be NULL to retrieve the number of elements which will be returned.
+ *
+ * Parameters:
+ *   outNumVsyncPeriods - if outVsyncPeriods was NULL, the number of vsync periods which
+ *       would have been returned; if outVsyncPeriods was not NULL, the number of
+ *       vsync periods returned, which must not exceed the value stored in
+ *       outNumVsyncPeriods prior to the call; pointer will be non-NULL
+ *   outVsyncPeriods - an array of vsync periods
+ *
+ * Returns HWC2_ERROR_NONE or one of the following errors:
+ *   HWC2_ERROR_BAD_DISPLAY - an invalid display handle was passed in
+ *   HWC2_ERROR_BAD_CONFIG - the configuration handle passed in is not valid for
+ *       this display
+ */
+typedef int32_t /*hwc2_error_t*/ (*HWC2_PFN_GET_SUPPORTED_DISPLAY_VSYNC_PERIODS)(
+        hwc2_device_t* device, hwc2_display_t display, hwc2_config_t config,
+        uint32_t* outNumVsyncPeriods, hwc2_vsync_period_t* outVsyncPeriods);
+
+/* getDisplayVsyncPeriod(..., outVsyncPeriods)
+ * Descriptor: HWC2_FUNCTION_GET_DISPLAY_VSYNC_PERIOD
+ * Required for HWC2 devices for composer 2.4
+ *
+ * Retrieves which vsync period the display is currently using.
+ *
+ * If no display configuration is currently active, this function must
+ * return BAD_CONFIG. If a vsync period is about to change due to a
+ * setActiveConfigAndVsyncPeriod call, this function must return the current vsync period
+ * until the change has taken place.
+ *
+ * Parameters:
+ *     outVsyncPeriod - the current vsync period of the display.
+ *
+ * Returns HWC2_ERROR_NONE or one of the following errors:
+ *   HWC2_ERROR_BAD_DISPLAY - an invalid display handle was passed in
+ *   HWC2_ERROR_BAD_CONFIG - no configuration is currently active
+ */
+typedef int32_t /*hwc2_error_t*/ (*HWC2_PFN_GET_DISPLAY_VSYNC_PERIOD)(
+        hwc2_device_t* device, hwc2_display_t display, hwc2_vsync_period_t* outVsyncPeriod);
+
+/* setActiveConfigAndVsyncPeriod(..., config, vsyncPeriodNanos,
+ *                               vsyncPeriodChangeConstraints, outNewVsyncAppliedTime)
+ * Descriptor: HWC2_FUNCTION_SET_ACTIVE_CONFIG_AND_VSYNC_PERIOD
+ * Required for HWC2 devices for composer 2.4
+ *
+ * Sets the active configuration and the refresh rate for this display.
+ * If the config is the same as the current config, only the vsync period shall change.
+ * Upon returning, the given display configuration, except vsync period, must be active and
+ * remain so until either this function is called again or the display is disconnected.
+ * When the display starts to refresh at the new vsync period, onVsync_2_4 callback must be
+ * called with the new vsync period.
+ *
+ * Parameters:
+ *     config - the new display configuration.
+ *     vsyncPeriodNanos - the new display vsync period.
+ *     vsyncPeriodChangeConstraints - constraints required for changing vsync period:
+ *                                    desiredTimeNanos - the time in CLOCK_MONOTONIC after
+ *                                                       which the vsync period may change
+ *                                                       (i.e., the vsync period must not change
+ *                                                       before this time).
+ *                                    seamlessRequired - if true, requires that the vsync period
+ *                                                       change must happen seamlessly without
+ *                                                       a noticeable visual artifact.
+ *     outNewVsyncAppliedTime - the time in CLOCK_MONOTONIC when the new display will start to
+ *                              refresh at the new vsync period.
+ *
+ * Returns HWC2_ERROR_NONE or one of the following errors:
+ *   HWC2_ERROR_BAD_DISPLAY - an invalid display handle was passed in.
+ *   HWC2_ERROR_BAD_CONFIG - an invalid configuration handle passed in.
+ *   HWC2_ERROR_BAD_VSYNC_PERIOD - an invalid vsync period is passed in.
+ *   HWC2_ERROR_SEAMLESS_NOT_POSSIBLE - when seamlessRequired was true but the display cannot
+ *                                      achieve the vsync period change without a noticeable
+ *                                      visual artifact.
+ */
+typedef int32_t /*hwc2_error_t*/ (*HWC2_PFN_SET_ACTIVE_CONFIG_AND_VSYNC_PERIOD)(
+        hwc2_device_t* device, hwc2_display_t display, hwc2_config_t config,
+        hwc2_vsync_period_t vsyncPeriodNanos,
+        hwc_vsync_period_change_constraints_t* vsyncPeriodChangeConstraints,
+        int64_t* outNewVsyncAppliedTime);
+
 
 __END_DECLS
 
