@@ -22,5 +22,4 @@ cc_library_shared {
         "liblog",
         "libcutils",
     ],
-    cflags: ["-Wall", "-Werror"],
 }

@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-// #define LOG_NDEBUG 0
-#define LOG_TAG "MetadataReader"
-
 #include "metadata_reader.h"
 
+// #define LOG_NDEBUG 0
+#define LOG_TAG "MetadataReader"
 #include <cutils/log.h>
 #include <system/camera.h>
 
@@ -201,9 +200,9 @@ int MetadataReader::StreamStallDurations(
     }
     // Must have a non-negative stall.
     if (stall.duration < 0) {
-      ALOGE("%s: Invalid stall duration: negative stall %lld.",
+      ALOGE("%s: Invalid stall duration: negative stall %d.",
             __func__,
-            static_cast<long long>(stall.duration));
+            stall.duration);
       return -EINVAL;
     }
     // TODO(b/31384253): YUV_420_888, RAW10, RAW12, RAW_OPAQUE,

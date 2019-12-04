@@ -21,6 +21,7 @@
 #include <set>
 
 #include <hardware/camera3.h>
+
 #include "common.h"
 #include "metadata/metadata_reader.h"
 #include "metadata/types.h"
