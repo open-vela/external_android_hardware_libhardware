@@ -63,9 +63,25 @@ struct fb_context_t {
 static int fb_setSwapInterval(struct framebuffer_device_t* dev,
             int interval)
 {
+    fb_context_t* ctx = (fb_context_t*)dev;
     if (interval < dev->minSwapInterval || interval > dev->maxSwapInterval)
         return -EINVAL;
     // FIXME: implement fb_setSwapInterval
+    return 0;
+}
+
+static int fb_setUpdateRect(struct framebuffer_device_t* dev,
+        int l, int t, int w, int h)
+{
+    if (((w|h) <= 0) || ((l|t)<0))
+        return -EINVAL;
+        
+    fb_context_t* ctx = (fb_context_t*)dev;
+    private_module_t* m = reinterpret_cast<private_module_t*>(
+            dev->common.module);
+    m->info.reserved[0] = 0x54445055; // "UPDT";
+    m->info.reserved[1] = (uint16_t)l | ((uint32_t)t << 16);
+    m->info.reserved[2] = (uint16_t)(l+w) | ((uint32_t)(t+h) << 16);
     return 0;
 }
 
@@ -73,6 +89,8 @@ static int fb_post(struct framebuffer_device_t* dev, buffer_handle_t buffer)
 {
     if (private_handle_t::validate(buffer) < 0)
         return -EINVAL;
+
+    fb_context_t* ctx = (fb_context_t*)dev;
 
     private_handle_t const* hnd = reinterpret_cast<private_handle_t const*>(buffer);
     private_module_t* m = reinterpret_cast<private_module_t*>(
@@ -117,7 +135,7 @@ static int fb_post(struct framebuffer_device_t* dev, buffer_handle_t buffer)
 
 /*****************************************************************************/
 
-int mapFrameBufferLocked(struct private_module_t* module, int format)
+int mapFrameBufferLocked(struct private_module_t* module)
 {
     // already initialized...
     if (module->framebuffer) {
@@ -161,20 +179,6 @@ int mapFrameBufferLocked(struct private_module_t* module, int format)
      */
     info.yres_virtual = info.yres * NUM_BUFFERS;
 
-    switch (format) {
-    case HAL_PIXEL_FORMAT_RGBA_8888:
-        info.bits_per_pixel = 32;
-        info.red.offset = 0;
-        info.red.length = 8;
-        info.green.offset = 8;
-        info.green.length = 8;
-        info.blue.offset = 16;
-        info.blue.length = 8;
-        break;
-    default:
-        ALOGW("unknown format: %d", format);
-        break;
-    }
 
     uint32_t flags = PAGE_FLIP;
 #if USE_PAN_DISPLAY
@@ -275,6 +279,7 @@ int mapFrameBufferLocked(struct private_module_t* module, int format)
      * map the framebuffer
      */
 
+    int err;
     size_t fbSize = roundUpToPageSize(finfo.line_length * info.yres_virtual);
     module->framebuffer = new private_handle_t(dup(fd), fbSize, 0);
 
@@ -294,8 +299,7 @@ int mapFrameBufferLocked(struct private_module_t* module, int format)
 static int mapFrameBuffer(struct private_module_t* module)
 {
     pthread_mutex_lock(&module->lock);
-    // Request RGBA8888 because the platform assumes support for RGBA8888.
-    int err = mapFrameBufferLocked(module, HAL_PIXEL_FORMAT_RGBA_8888);
+    int err = mapFrameBufferLocked(module);
     pthread_mutex_unlock(&module->lock);
     return err;
 }
@@ -347,8 +351,6 @@ int fb_device_open(hw_module_t const* module, const char* name,
             const_cast<int&>(dev->device.minSwapInterval) = 1;
             const_cast<int&>(dev->device.maxSwapInterval) = 1;
             *device = &dev->device.common;
-        } else {
-            free(dev);
         }
     }
     return status;
