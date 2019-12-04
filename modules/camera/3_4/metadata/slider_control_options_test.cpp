@@ -21,6 +21,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <hardware/camera3.h>
+
 #include "default_option_delegate_mock.h"
 
 using testing::Return;
