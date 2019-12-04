@@ -112,10 +112,6 @@ typedef enum {
     KM_TAG_ALLOW_WHILE_ON_BODY = KM_BOOL | 506, /* Allow key to be used after authentication timeout
                                                  * if device is still on-body (requires secure
                                                  * on-body sensor. */
-    KM_TAG_TRUSTED_CONFIRMATION_REQUIRED = KM_BOOL | 508, /* Require user confirmation through a
-                                                           * trusted UI to use this key */
-    KM_TAG_UNLOCKED_DEVICE_REQUIRED = KM_BOOL | 509, /* Require the device screen to be unlocked if the
-                                                      * key is used. */
 
     /* Application access control */
     KM_TAG_ALL_APPLICATIONS = KM_BOOL | 600, /* Specified to indicate key is usable by all
@@ -186,7 +182,6 @@ typedef enum {
 
     /* Block ciphers algorithms */
     KM_ALGORITHM_AES = 32,
-    KM_ALGORITHM_TRIPLE_DES = 33,
 
     /* MAC algorithms */
     KM_ALGORITHM_HMAC = 128,
@@ -301,8 +296,6 @@ typedef enum {
     KM_PURPOSE_SIGN = 2,       /* Usable with RSA, EC and HMAC keys. */
     KM_PURPOSE_VERIFY = 3,     /* Usable with RSA, EC and HMAC keys. */
     KM_PURPOSE_DERIVE_KEY = 4, /* Usable with EC keys. */
-    KM_PURPOSE_WRAP = 5,       /* Usable with wrapped keys. */
-
 } keymaster_purpose_t;
 
 typedef struct {
@@ -456,8 +449,6 @@ typedef enum {
     KM_ERROR_KEYMASTER_NOT_CONFIGURED = -64,
     KM_ERROR_ATTESTATION_APPLICATION_ID_MISSING = -65,
     KM_ERROR_CANNOT_ATTEST_IDS = -66,
-    KM_ERROR_NO_USER_CONFIRMATION = -71,
-    KM_ERROR_DEVICE_LOCKED = -72,
 
     KM_ERROR_UNIMPLEMENTED = -100,
     KM_ERROR_VERSION_MISMATCH = -101,
@@ -589,7 +580,7 @@ inline int keymaster_param_compare(const keymaster_key_param_t* a, const keymast
                 return -1;
             if (a->blob.data_length > b->blob.data_length)
                 return 1;
-        }
+        };
     }
 
     return 0;

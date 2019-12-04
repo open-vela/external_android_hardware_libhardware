@@ -94,12 +94,10 @@ class StaticPropertiesTest : public Test {
     } else if (input) {
       type = CAMERA3_STREAM_INPUT;
     }
-    camera3_stream_t stream;
-    stream.stream_type = type;
-    stream.width = width;
-    stream.height = height;
-    stream.format = format;
-    return stream;
+    return {static_cast<int>(type),
+            static_cast<uint32_t>(width),
+            static_cast<uint32_t>(height),
+            static_cast<int>(format)};
   }
 
   void ExpectConfigurationSupported(std::vector<camera3_stream_t>& streams,
@@ -109,10 +107,9 @@ class StaticPropertiesTest : public Test {
       stream_addresses.push_back(&streams[i]);
     }
     camera3_stream_configuration_t config = {
-        static_cast<uint32_t>(stream_addresses.size()),
+        stream_addresses.size(),
         stream_addresses.data(),
-        CAMERA3_STREAM_CONFIGURATION_NORMAL_MODE,
-        nullptr};
+        CAMERA3_STREAM_CONFIGURATION_NORMAL_MODE};
     PrepareDefaultDUT();
     EXPECT_EQ(dut_->StreamConfigurationSupported(&config), expected);
   }
@@ -438,7 +435,7 @@ TEST_F(StaticPropertiesTest, ConfigureNull) {
 TEST_F(StaticPropertiesTest, ConfigureEmptyStreams) {
   std::vector<camera3_stream_t*> streams(1);
   camera3_stream_configuration_t config = {
-      0, streams.data(), CAMERA3_STREAM_CONFIGURATION_NORMAL_MODE, nullptr};
+      0, streams.data(), CAMERA3_STREAM_CONFIGURATION_NORMAL_MODE};
   PrepareDefaultDUT();
   EXPECT_FALSE(dut_->StreamConfigurationSupported(&config));
 }
@@ -446,10 +443,7 @@ TEST_F(StaticPropertiesTest, ConfigureEmptyStreams) {
 TEST_F(StaticPropertiesTest, ConfigureNullStreams) {
   std::vector<camera3_stream_t*> streams(2, nullptr);
   camera3_stream_configuration_t config = {
-      static_cast<uint32_t>(streams.size()),
-      streams.data(),
-      CAMERA3_STREAM_CONFIGURATION_NORMAL_MODE,
-      nullptr};
+      streams.size(), streams.data(), CAMERA3_STREAM_CONFIGURATION_NORMAL_MODE};
   PrepareDefaultDUT();
   EXPECT_FALSE(dut_->StreamConfigurationSupported(&config));
 }
@@ -457,7 +451,7 @@ TEST_F(StaticPropertiesTest, ConfigureNullStreams) {
 TEST_F(StaticPropertiesTest, ConfigureNullStreamVector) {
   // Even if the camera claims to have multiple streams, check for null.
   camera3_stream_configuration_t config = {
-      3, nullptr, CAMERA3_STREAM_CONFIGURATION_NORMAL_MODE, nullptr};
+      3, nullptr, CAMERA3_STREAM_CONFIGURATION_NORMAL_MODE};
   PrepareDefaultDUT();
   EXPECT_FALSE(dut_->StreamConfigurationSupported(&config));
 }
@@ -622,8 +616,7 @@ TEST_F(StaticPropertiesTest, ConfigureBadOperationMode) {
   camera3_stream_configuration_t config = {
       1,
       &stream_address,
-      99, // Not a valid operation mode.
-      nullptr
+      99  // Not a valid operation mode.
   };
   PrepareDefaultDUT();
   EXPECT_FALSE(dut_->StreamConfigurationSupported(&config));
