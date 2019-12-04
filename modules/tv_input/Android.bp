@@ -22,5 +22,4 @@ cc_library_shared {
         "liblog",
     ],
     srcs: ["tv_input.cpp"],
-    cflags: ["-Wall", "-Werror"],
 }

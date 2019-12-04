@@ -19,7 +19,9 @@
 
 #include <iterator>
 #include <memory>
+#include <set>
 
+#include "common.h"
 #include "metadata/metadata_common.h"
 #include "v4l2_wrapper.h"
 

@@ -17,10 +17,11 @@
 #ifndef V4L2_CAMERA_HAL_METADATA_SLIDER_CONTROL_OPTIONS_H_
 #define V4L2_CAMERA_HAL_METADATA_SLIDER_CONTROL_OPTIONS_H_
 
-#include <cerrno>
+#include <errno.h>
+
 #include <vector>
 
-#include "common.h"
+#include "../common.h"
 #include "control_options_interface.h"
 #include "default_option_delegate.h"
 
