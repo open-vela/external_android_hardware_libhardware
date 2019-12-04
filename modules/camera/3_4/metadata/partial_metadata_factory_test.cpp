@@ -14,15 +14,16 @@
  * limitations under the License.
  */
 
+#include "partial_metadata_factory.h"
+
 #include <camera/CameraMetadata.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include "../v4l2_wrapper_mock.h"
 #include "converter_interface_mock.h"
 #include "metadata_common.h"
-#include "partial_metadata_factory.h"
 #include "test_common.h"
+#include "v4l2_wrapper_mock.h"
 
 using testing::AtMost;
 using testing::Expectation;
@@ -44,11 +45,11 @@ class PartialMetadataFactoryTest : public Test {
   }
 
   virtual void ExpectControlTags() {
-    ASSERT_EQ(control_->StaticTags().size(), 1);
+    ASSERT_EQ(control_->StaticTags().size(), 1u);
     EXPECT_EQ(control_->StaticTags()[0], options_tag_);
-    ASSERT_EQ(control_->ControlTags().size(), 1);
+    ASSERT_EQ(control_->ControlTags().size(), 1u);
     EXPECT_EQ(control_->ControlTags()[0], delegate_tag_);
-    ASSERT_EQ(control_->DynamicTags().size(), 1);
+    ASSERT_EQ(control_->DynamicTags().size(), 1u);
     EXPECT_EQ(control_->DynamicTags()[0], delegate_tag_);
   }
 
@@ -56,14 +57,14 @@ class PartialMetadataFactoryTest : public Test {
     // Options should be available.
     android::CameraMetadata metadata;
     ASSERT_EQ(control_->PopulateStaticFields(&metadata), 0);
-    EXPECT_EQ(metadata.entryCount(), 1);
+    EXPECT_EQ(metadata.entryCount(), 1u);
     ExpectMetadataEq(metadata, options_tag_, options);
   }
 
   virtual void ExpectControlValue(uint8_t value) {
     android::CameraMetadata metadata;
     ASSERT_EQ(control_->PopulateDynamicFields(&metadata), 0);
-    EXPECT_EQ(metadata.entryCount(), 1);
+    EXPECT_EQ(metadata.entryCount(), 1u);
     ExpectMetadataEq(metadata, delegate_tag_, value);
   }
 
@@ -84,14 +85,14 @@ TEST_F(PartialMetadataFactoryTest, FixedState) {
   uint8_t value = 13;
   std::unique_ptr<State<uint8_t>> state = FixedState(delegate_tag_, value);
 
-  ASSERT_EQ(state->StaticTags().size(), 0);
-  ASSERT_EQ(state->ControlTags().size(), 0);
-  ASSERT_EQ(state->DynamicTags().size(), 1);
+  ASSERT_EQ(state->StaticTags().size(), 0u);
+  ASSERT_EQ(state->ControlTags().size(), 0u);
+  ASSERT_EQ(state->DynamicTags().size(), 1u);
   EXPECT_EQ(state->DynamicTags()[0], delegate_tag_);
 
   android::CameraMetadata metadata;
   ASSERT_EQ(state->PopulateDynamicFields(&metadata), 0);
-  EXPECT_EQ(metadata.entryCount(), 1);
+  EXPECT_EQ(metadata.entryCount(), 1u);
   ExpectMetadataEq(metadata, delegate_tag_, value);
 }
 
