@@ -22,6 +22,7 @@
 
 #include <camera/CameraMetadata.h>
 #include <gtest/gtest.h>
+
 #include "array_vector.h"
 #include "metadata_common.h"
 
@@ -79,9 +80,9 @@ static void ExpectMetadataEq(const android::CameraMetadata& metadata,
 
 // Vector of arrays.
 template <typename T, size_t N>
-static void ExpectMetadataEq(const android::CameraMetadata& metadata,
-                             int32_t tag,
-                             const std::vector<std::array<T, N>>& expected) {
+static int ExpectMetadataEq(const android::CameraMetadata& metadata,
+                            int32_t tag,
+                            const std::vector<std::array<T, N>>& expected) {
   // Convert to array vector so we know all the elements are contiguous.
   ArrayVector<T, N> array_vector;
   for (const auto& array : expected) {

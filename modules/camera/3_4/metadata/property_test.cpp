@@ -20,13 +20,19 @@
 #include <vector>
 
 #include <camera/CameraMetadata.h>
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <hardware/camera3.h>
+
 #include "array_vector.h"
 #include "metadata_common.h"
 #include "test_common.h"
 
+using testing::AtMost;
+using testing::Return;
+using testing::ReturnRef;
 using testing::Test;
+using testing::_;
 
 namespace v4l2_camera_hal {
 
@@ -43,9 +49,9 @@ TEST_F(PropertyTest, Tags) {
   Property<int32_t> property(int_tag_, 1);
 
   // Should have only the single tag it was constructed with.
-  EXPECT_EQ(property.ControlTags().size(), 0u);
-  EXPECT_EQ(property.DynamicTags().size(), 0u);
-  ASSERT_EQ(property.StaticTags().size(), 1u);
+  EXPECT_EQ(property.ControlTags().size(), 0);
+  EXPECT_EQ(property.DynamicTags().size(), 0);
+  ASSERT_EQ(property.StaticTags().size(), 1);
   // The macro doesn't like the int_tag_ variable being passed in directly.
   int32_t expected_tag = int_tag_;
   EXPECT_EQ(property.StaticTags()[0], expected_tag);
@@ -62,7 +68,7 @@ TEST_F(PropertyTest, PopulateStaticSingleNumber) {
 
   // Check the results.
   // Should only have added 1 entry.
-  EXPECT_EQ(metadata.entryCount(), 1u);
+  EXPECT_EQ(metadata.entryCount(), 1);
   // Should have added the right entry.
   ExpectMetadataEq(metadata, int_tag_, data);
 }
@@ -80,7 +86,7 @@ TEST_F(PropertyTest, PopulateStaticVector) {
 
   // Check the results.
   // Should only have added 1 entry.
-  EXPECT_EQ(metadata.entryCount(), 1u);
+  EXPECT_EQ(metadata.entryCount(), 1);
   // Should have added the right entry.
   ExpectMetadataEq(metadata, float_tag_, data);
 }
@@ -96,7 +102,7 @@ TEST_F(PropertyTest, PopulateStaticArray) {
 
   // Check the results.
   // Should only have added 1 entry.
-  EXPECT_EQ(metadata.entryCount(), 1u);
+  EXPECT_EQ(metadata.entryCount(), 1);
   // Should have added the right entry.
   ExpectMetadataEq(metadata, float_tag_, data);
 }
@@ -114,7 +120,7 @@ TEST_F(PropertyTest, PopulateStaticArrayVector) {
 
   // Check the results.
   // Should only have added 1 entry.
-  EXPECT_EQ(metadata.entryCount(), 1u);
+  EXPECT_EQ(metadata.entryCount(), 1);
   // Should have added the right entry.
   ExpectMetadataEq(metadata, byte_tag_, data);
 }

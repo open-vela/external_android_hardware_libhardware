@@ -16,6 +16,8 @@
 
 #include "capture_request.h"
 
+#include <set>
+
 namespace default_camera_hal {
 
 CaptureRequest::CaptureRequest() : CaptureRequest(nullptr) {}

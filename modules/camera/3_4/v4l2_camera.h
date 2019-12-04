@@ -21,12 +21,14 @@
 
 #include <array>
 #include <condition_variable>
+#include <map>
 #include <queue>
 #include <string>
 
 #include <camera/CameraMetadata.h>
 #include <utils/StrongPointer.h>
 #include <utils/Thread.h>
+
 #include "camera.h"
 #include "common.h"
 #include "metadata/metadata.h"
@@ -97,7 +99,9 @@ class V4L2Camera : public default_camera_hal::Camera {
   std::queue<std::shared_ptr<default_camera_hal::CaptureRequest>>
       request_queue_;
   std::mutex in_flight_lock_;
-  uint32_t in_flight_buffer_count_;
+  // Maps buffer index : request.
+  std::map<uint32_t, std::shared_ptr<default_camera_hal::CaptureRequest>>
+      in_flight_;
   // Threads require holding an Android strong pointer.
   android::sp<android::Thread> buffer_enqueuer_;
   android::sp<android::Thread> buffer_dequeuer_;
