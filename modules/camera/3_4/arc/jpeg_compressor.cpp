@@ -8,6 +8,8 @@
 
 #include <memory>
 
+#include <errno.h>
+
 #include "arc/common.h"
 
 namespace arc {
