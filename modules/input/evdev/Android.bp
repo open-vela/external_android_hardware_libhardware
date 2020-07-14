@@ -27,7 +27,6 @@ cc_library_shared {
         "SwitchInputMapper.cpp",
     ],
 
-    header_libs: ["jni_headers"],
     shared_libs: [
         "libhardware_legacy",
         "liblog",
