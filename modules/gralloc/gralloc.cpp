@@ -14,25 +14,24 @@
  * limitations under the License.
  */
 
-#include <limits.h>
-#include <unistd.h>
-#include <fcntl.h>
 #include <errno.h>
+#include <fcntl.h>
+#include <limits.h>
 #include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <sys/ioctl.h>
+#include <unistd.h>
 
 #include <cutils/ashmem.h>
-#include <cutils/log.h>
 #include <cutils/atomic.h>
+#include <log/log.h>
 
-#include <hardware/hardware.h>
 #include <hardware/gralloc.h>
+#include <hardware/hardware.h>
 
 #include "gralloc_priv.h"
 #include "gr.h"
@@ -102,7 +101,7 @@ struct private_module_t HAL_MODULE_INFO_SYM = {
 /*****************************************************************************/
 
 static int gralloc_alloc_framebuffer_locked(alloc_device_t* dev,
-        size_t size, int usage, buffer_handle_t* pHandle)
+        size_t size, int format, int usage, buffer_handle_t* pHandle)
 {
     private_module_t* m = reinterpret_cast<private_module_t*>(
             dev->common.module);
@@ -111,7 +110,7 @@ static int gralloc_alloc_framebuffer_locked(alloc_device_t* dev,
     if (m->framebuffer == NULL) {
         // initialize the framebuffer, the framebuffer is mapped once
         // and forever.
-        int err = mapFrameBufferLocked(m);
+        int err = mapFrameBufferLocked(m, format);
         if (err < 0) {
             return err;
         }
@@ -155,12 +154,12 @@ static int gralloc_alloc_framebuffer_locked(alloc_device_t* dev,
 }
 
 static int gralloc_alloc_framebuffer(alloc_device_t* dev,
-        size_t size, int usage, buffer_handle_t* pHandle)
+        size_t size, int format, int usage, buffer_handle_t* pHandle)
 {
     private_module_t* m = reinterpret_cast<private_module_t*>(
             dev->common.module);
     pthread_mutex_lock(&m->lock);
-    int err = gralloc_alloc_framebuffer_locked(dev, size, usage, pHandle);
+    int err = gralloc_alloc_framebuffer_locked(dev, size, format, usage, pHandle);
     pthread_mutex_unlock(&m->lock);
     return err;
 }
@@ -237,7 +236,7 @@ static int gralloc_alloc(alloc_device_t* dev,
 
     int err;
     if (usage & GRALLOC_USAGE_HW_FB) {
-        err = gralloc_alloc_framebuffer(dev, size, usage, pHandle);
+        err = gralloc_alloc_framebuffer(dev, size, format, usage, pHandle);
     } else {
         err = gralloc_alloc_buffer(dev, size, usage, pHandle);
     }
