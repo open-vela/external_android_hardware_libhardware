@@ -185,7 +185,6 @@ enum {
 #define SENSOR_STRING_TYPE_ADDITIONAL_INFO              "android.sensor.additional_info"
 #define SENSOR_STRING_TYPE_LOW_LATENCY_OFFBODY_DETECT   "android.sensor.low_latency_offbody_detect"
 #define SENSOR_STRING_TYPE_ACCELEROMETER_UNCALIBRATED   "android.sensor.accelerometer_uncalibrated"
-#define SENSOR_STRING_TYPE_HINGE_ANGLE                  "android.sensor.hinge_angle"
 
 /**
  * Values returned by the accelerometer in various locations in the universe.
@@ -579,11 +578,10 @@ typedef struct sensors_poll_device_1 {
              * sensor_handle is the handle of the sensor to change.
              * enabled set to 1 to enable, or 0 to disable the sensor.
              *
-             * Before sensor activation, existing sensor events that have not
-             * been picked up by poll() should be abandoned so that application
-             * upon new activation request will not get stale events.
-             * (events that are generated during latter activation or during
-             * data injection mode after sensor deactivation)
+             * After sensor de-activation, existing sensor events that have not
+             * been picked up by poll() should be abandoned immediately so that
+             * subsequent activation will not get stale sensor events (events
+             * that is generated prior to the latter activation).
              *
              * Return 0 on success, negative errno code otherwise.
              */

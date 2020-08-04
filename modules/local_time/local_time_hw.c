@@ -21,9 +21,9 @@
 #include <malloc.h>
 #include <stdint.h>
 #include <string.h>
-#include <time.h>
+#include <sys/time.h>
 
-#include <log/log.h>
+#include <cutils/log.h>
 
 #include <hardware/hardware.h>
 #include <hardware/local_time_hal.h>
@@ -72,6 +72,8 @@ static int ltdev_open(const hw_module_t* module, const char* name,
                      hw_device_t** device)
 {
     struct stub_local_time_device *ltdev;
+    struct timespec ts;
+    int ret;
 
     if (strcmp(name, LOCAL_TIME_HARDWARE_INTERFACE) != 0)
         return -EINVAL;
