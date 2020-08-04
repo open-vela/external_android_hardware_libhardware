@@ -37,8 +37,6 @@
 #include "MouseInputMapper.h"
 #include "SwitchInputMapper.h"
 
-#define MSC_ANDROID_TIME_SEC  0x6
-#define MSC_ANDROID_TIME_USEC 0x7
 
 namespace android {
 
@@ -93,19 +91,6 @@ static uint32_t getAbsAxisUsage(int32_t axis, uint32_t deviceClasses) {
 
     // Joystick devices get the rest.
     return INPUT_DEVICE_CLASS_JOYSTICK;
-}
-
-static bool getBooleanProperty(const InputProperty& prop) {
-    const char* propValue = prop.getValue();
-    if (propValue == nullptr) return false;
-
-    char* end;
-    int value = std::strtol(propValue, &end, 10);
-    if (*end != '\0') {
-        ALOGW("Expected boolean for property %s; value=%s", prop.getKey(), propValue);
-        return false;
-    }
-    return value;
 }
 
 EvdevDevice::EvdevDevice(InputHostInterface* host, const std::shared_ptr<InputDeviceNode>& node) :
@@ -252,25 +237,6 @@ void EvdevDevice::processInput(InputEvent& event, nsecs_t currentTime) {
     ALOGD(log.c_str(), mDeviceNode->getPath().c_str(), event.when, event.type, event.code,
             event.value);
 #endif
-
-    if (event.type == EV_MSC) {
-        if (event.code == MSC_ANDROID_TIME_SEC) {
-            mOverrideSec = event.value;
-        } else if (event.code == MSC_ANDROID_TIME_USEC) {
-            mOverrideUsec = event.value;
-        }
-        return;
-    }
-
-    if (mOverrideSec || mOverrideUsec) {
-        event.when = s2ns(mOverrideSec) + us2ns(mOverrideUsec);
-        ALOGV("applied override time %d.%06d", mOverrideSec, mOverrideUsec);
-
-        if (event.type == EV_SYN && event.code == SYN_REPORT) {
-            mOverrideSec = 0;
-            mOverrideUsec = 0;
-        }
-    }
 
     // Bug 7291243: Add a guard in case the kernel generates timestamps
     // that appear to be far into the future because they were generated

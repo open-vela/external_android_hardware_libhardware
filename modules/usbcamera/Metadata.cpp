@@ -16,12 +16,15 @@
 
 //#define LOG_NDEBUG 0
 #define LOG_TAG "Metadata"
-#include <cutils/log.h>
 
-#include <system/camera_metadata.h>
+#include <errno.h>
+
+#include <log/log.h>
 
 #define ATRACE_TAG (ATRACE_TAG_CAMERA | ATRACE_TAG_HAL)
 #include <utils/Trace.h>
+
+#include <system/camera_metadata.h>
 
 #include "Metadata.h"
 

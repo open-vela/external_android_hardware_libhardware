@@ -25,11 +25,14 @@ LOCAL_MODULE := sensors.$(TARGET_DEVICE)
 LOCAL_MODULE_RELATIVE_PATH := hw
 LOCAL_PROPRIETARY_MODULE := true
 
-LOCAL_CFLAGS := -DLOG_TAG=\"MultiHal\"
+LOCAL_CFLAGS := -Wall -Werror -DLOG_TAG=\"MultiHal\"
 
 LOCAL_SRC_FILES := \
     multihal.cpp \
     SensorEventQueue.cpp \
+
+LOCAL_HEADER_LIBRARIES := \
+    libhardware_headers \
 
 LOCAL_SHARED_LIBRARIES := \
     libcutils \
@@ -37,10 +40,6 @@ LOCAL_SHARED_LIBRARIES := \
     liblog \
     libutils \
 
-LOCAL_STRIP_MODULE := false
-
 include $(BUILD_SHARED_LIBRARY)
 
 endif # USE_SENSOR_MULTI_HAL
-
-include $(call all-makefiles-under, $(LOCAL_PATH))
