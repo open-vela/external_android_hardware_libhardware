@@ -56,8 +56,7 @@ __BEGIN_DECLS
 #define AUDIO_DEVICE_API_VERSION_1_0 HARDWARE_DEVICE_API_VERSION(1, 0)
 #define AUDIO_DEVICE_API_VERSION_2_0 HARDWARE_DEVICE_API_VERSION(2, 0)
 #define AUDIO_DEVICE_API_VERSION_3_0 HARDWARE_DEVICE_API_VERSION(3, 0)
-#define AUDIO_DEVICE_API_VERSION_3_1 HARDWARE_DEVICE_API_VERSION(3, 1)
-#define AUDIO_DEVICE_API_VERSION_CURRENT AUDIO_DEVICE_API_VERSION_3_1
+#define AUDIO_DEVICE_API_VERSION_CURRENT AUDIO_DEVICE_API_VERSION_3_0
 /* Minimal audio HAL version supported by the audio framework */
 #define AUDIO_DEVICE_API_VERSION_MIN AUDIO_DEVICE_API_VERSION_2_0
 
@@ -91,17 +90,6 @@ __BEGIN_DECLS
 
 /* Bluetooth SCO wideband */
 #define AUDIO_PARAMETER_KEY_BT_SCO_WB "bt_wbs"
-
-/* BT SCO headset name for debug */
-#define AUDIO_PARAMETER_KEY_BT_SCO_HEADSET_NAME "bt_headset_name"
-
-/* BT SCO HFP control */
-#define AUDIO_PARAMETER_KEY_HFP_ENABLE            "hfp_enable"
-#define AUDIO_PARAMETER_KEY_HFP_SET_SAMPLING_RATE "hfp_set_sampling_rate"
-#define AUDIO_PARAMETER_KEY_HFP_VOLUME            "hfp_volume"
-
-/* Set screen orientation */
-#define AUDIO_PARAMETER_KEY_ROTATION "rotation"
 
 /**
  *  audio stream parameters
@@ -203,14 +191,7 @@ typedef enum {
     STREAM_CBK_EVENT_ERROR, /* stream hit some error, let AF take action */
 } stream_callback_event_t;
 
-typedef enum {
-    STREAM_EVENT_CBK_TYPE_CODEC_FORMAT_CHANGED, /* codec format of the stream changed */
-} stream_event_callback_type_t;
-
 typedef int (*stream_callback_t)(stream_callback_event_t event, void *param, void *cookie);
-
-typedef int (*stream_event_callback_t)(stream_event_callback_type_t event,
-                                       void *param, void *cookie);
 
 /* type of drain requested to audio_stream_out->drain(). Mutually exclusive */
 typedef enum {
@@ -220,24 +201,13 @@ typedef enum {
                                    give time for gapless track switch */
 } audio_drain_type_t;
 
-typedef struct source_metadata {
-    size_t track_count;
-    /** Array of metadata of each track connected to this source. */
-    struct playback_track_metadata* tracks;
-} source_metadata_t;
-
-typedef struct sink_metadata {
-    size_t track_count;
-    /** Array of metadata of each track connected to this sink. */
-    struct record_track_metadata* tracks;
-} sink_metadata_t;
-
 /**
  * audio_stream_out is the abstraction interface for the audio output hardware.
  *
  * It provides information about various properties of the audio output
  * hardware driver.
  */
+
 struct audio_stream_out {
     /**
      * Common methods of the audio stream out.  This *must* be the first member of audio_stream_out
@@ -422,20 +392,6 @@ struct audio_stream_out {
      */
     int (*get_mmap_position)(const struct audio_stream_out *stream,
                              struct audio_mmap_position *position);
-
-    /**
-     * Called when the metadata of the stream's source has been changed.
-     * @param source_metadata Description of the audio that is played by the clients.
-     */
-    void (*update_source_metadata)(struct audio_stream_out *stream,
-                                   const struct source_metadata* source_metadata);
-
-    /**
-     * Set the callback function for notifying events for an output stream.
-     */
-    int (*set_event_callback)(struct audio_stream_out *stream,
-                              stream_event_callback_t callback,
-                              void *cookie);
 };
 typedef struct audio_stream_out audio_stream_out_t;
 
@@ -545,61 +501,6 @@ struct audio_stream_in {
      */
     int (*get_mmap_position)(const struct audio_stream_in *stream,
                              struct audio_mmap_position *position);
-
-    /**
-     * Called by the framework to read active microphones
-     *
-     * \param[in] stream the stream object.
-     * \param[out] mic_array Pointer to first element on array with microphone info
-     * \param[out] mic_count When called, this holds the value of the max number of elements
-     *                       allowed in the mic_array. The actual number of elements written
-     *                       is returned here.
-     *                       if mic_count is passed as zero, mic_array will not be populated,
-     *                       and mic_count will return the actual number of active microphones.
-     *
-     * \return 0 if the microphone array is successfully filled.
-     *         -ENOSYS if there is an error filling the data
-     */
-    int (*get_active_microphones)(const struct audio_stream_in *stream,
-                                  struct audio_microphone_characteristic_t *mic_array,
-                                  size_t *mic_count);
-
-    /**
-     * Called by the framework to instruct the HAL to optimize the capture stream in the
-     * specified direction.
-     *
-     * \param[in] stream    the stream object.
-     * \param[in] direction The direction constant (from audio-base.h)
-     *   MIC_DIRECTION_UNSPECIFIED  Don't do any directionality processing of the
-     *      activated microphone(s).
-     *   MIC_DIRECTION_FRONT        Optimize capture for audio coming from the screen-side
-     *      of the device.
-     *   MIC_DIRECTION_BACK         Optimize capture for audio coming from the side of the
-     *      device opposite the screen.
-     *   MIC_DIRECTION_EXTERNAL     Optimize capture for audio coming from an off-device
-     *      microphone.
-     * \return OK if the call is successful, an error code otherwise.
-     */
-    int (*set_microphone_direction)(const struct audio_stream_in *stream,
-                                    audio_microphone_direction_t direction);
-
-    /**
-     * Called by the framework to specify to the HAL the desired zoom factor for the selected
-     * microphone(s).
-     *
-     * \param[in] stream    the stream object.
-     * \param[in] zoom      the zoom factor.
-     * \return OK if the call is successful, an error code otherwise.
-     */
-    int (*set_microphone_field_dimension)(const struct audio_stream_in *stream,
-                                          float zoom);
-
-    /**
-     * Called when the metadata of the stream's sink has been changed.
-     * @param sink_metadata Description of the audio that is recorded by the clients.
-     */
-    void (*update_sink_metadata)(struct audio_stream_in *stream,
-                                 const struct sink_metadata* sink_metadata);
 };
 typedef struct audio_stream_in audio_stream_in_t;
 
@@ -772,25 +673,6 @@ struct audio_hw_device {
     void (*close_input_stream)(struct audio_hw_device *dev,
                                struct audio_stream_in *stream_in);
 
-    /**
-     * Called by the framework to read available microphones characteristics.
-     *
-     * \param[in] dev the hw_device object.
-     * \param[out] mic_array Pointer to first element on array with microphone info
-     * \param[out] mic_count When called, this holds the value of the max number of elements
-     *                       allowed in the mic_array. The actual number of elements written
-     *                       is returned here.
-     *                       if mic_count is passed as zero, mic_array will not be populated,
-     *                       and mic_count will return the actual number of microphones in the
-     *                       system.
-     *
-     * \return 0 if the microphone array is successfully filled.
-     *         -ENOSYS if there is an error filling the data
-     */
-    int (*get_microphones)(const struct audio_hw_device *dev,
-                           struct audio_microphone_characteristic_t *mic_array,
-                           size_t *mic_count);
-
     /** This method dumps the state of the audio hardware */
     int (*dump)(const struct audio_hw_device *dev, int fd);
 
@@ -840,31 +722,6 @@ struct audio_hw_device {
     int (*set_audio_port_config)(struct audio_hw_device *dev,
                          const struct audio_port_config *config);
 
-    /**
-     * Applies an audio effect to an audio device.
-     *
-     * @param dev the audio HAL device context.
-     * @param device identifies the sink or source device the effect must be applied to.
-     *               "device" is the audio_port_handle_t indicated for the device when
-     *               the audio patch connecting that device was created.
-     * @param effect effect interface handle corresponding to the effect being added.
-     * @return retval operation completion status.
-     */
-    int (*add_device_effect)(struct audio_hw_device *dev,
-                        audio_port_handle_t device, effect_handle_t effect);
-
-    /**
-     * Stops applying an audio effect to an audio device.
-     *
-     * @param dev the audio HAL device context.
-     * @param device identifies the sink or source device this effect was applied to.
-     *               "device" is the audio_port_handle_t indicated for the device when
-     *               the audio patch is created.
-     * @param effect effect interface handle corresponding to the effect being removed.
-     * @return retval operation completion status.
-     */
-    int (*remove_device_effect)(struct audio_hw_device *dev,
-                        audio_port_handle_t device, effect_handle_t effect);
 };
 typedef struct audio_hw_device audio_hw_device_t;
 

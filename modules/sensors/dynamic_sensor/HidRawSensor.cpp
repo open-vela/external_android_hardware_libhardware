@@ -35,7 +35,7 @@ const std::string CUSTOM_TYPE_PREFIX("com.google.hardware.sensor.hid_dynamic.");
 HidRawSensor::HidRawSensor(
         SP(HidDevice) device, uint32_t usage, const std::vector<HidParser::ReportPacket> &packets)
         : mReportingStateId(-1), mPowerStateId(-1), mReportIntervalId(-1), mInputReportId(-1),
-        mEnabled(false), mSamplingPeriod(1000LL*1000*1000), mBatchingPeriod(0),
+        mEnabled(false), mSamplingPeriod(1000ll*1000*1000), mBatchingPeriod(0),
         mDevice(device), mValid(false) {
     if (device == nullptr) {
         return;
@@ -177,13 +177,13 @@ HidRawSensor::HidRawSensor(
                 }
 
                 ReportTranslateRecord record = {
-                    .type = TYPE_FLOAT,
-                    .maxValue = digest.maxRaw,
                     .minValue = digest.minRaw,
+                    .maxValue = digest.maxRaw,
                     .byteOffset = digest.bitOffset / 8,
                     .byteSize = digest.bitSize / 8,
                     .a = digest.a,
                     .b = digest.b,
+                    .type = TYPE_FLOAT
                 };
                 // keep track of range and resolution
                 range = std::max(std::max(std::abs((digest.maxRaw + digest.b) * digest.a),
@@ -250,12 +250,12 @@ bool HidRawSensor::processQuaternionUsage(const std::vector<HidParser::ReportPac
     }
 
     ReportTranslateRecord record = {
-        .type = TYPE_FLOAT,
-        .maxValue = quat.maxRaw,
         .minValue = quat.minRaw,
+        .maxValue = quat.maxRaw,
         .byteOffset = quat.bitOffset / 8,
         .byteSize = quat.bitSize / 8,
         .b = quat.b,
+        .type = TYPE_FLOAT,
     };
 
     // Android X Y Z maps to HID X -Z Y
@@ -351,10 +351,10 @@ bool HidRawSensor::processTriAxisUsage(const std::vector<HidParser::ReportPacket
     mFeatureInfo.reportModeFlag = SENSOR_FLAG_CONTINUOUS_MODE;
 
     ReportTranslateRecord record = {
-        .type = TYPE_FLOAT,
-        .maxValue = reportX.maxRaw,
         .minValue = reportX.minRaw,
+        .maxValue = reportX.maxRaw,
         .byteSize = reportX.bitSize / 8,
+        .type = TYPE_FLOAT
     };
 
     // Reorder and swap axis
