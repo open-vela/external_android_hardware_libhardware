@@ -5,9 +5,10 @@
 
 #include "arc/frame_buffer.h"
 
+#include <sys/mman.h>
+
 #include <utility>
 
-#include <sys/mman.h>
 #include "arc/common.h"
 #include "arc/image_processor.h"
 

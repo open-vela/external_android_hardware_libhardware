@@ -56,8 +56,7 @@ __BEGIN_DECLS
 #define AUDIO_DEVICE_API_VERSION_1_0 HARDWARE_DEVICE_API_VERSION(1, 0)
 #define AUDIO_DEVICE_API_VERSION_2_0 HARDWARE_DEVICE_API_VERSION(2, 0)
 #define AUDIO_DEVICE_API_VERSION_3_0 HARDWARE_DEVICE_API_VERSION(3, 0)
-#define AUDIO_DEVICE_API_VERSION_3_1 HARDWARE_DEVICE_API_VERSION(3, 1)
-#define AUDIO_DEVICE_API_VERSION_CURRENT AUDIO_DEVICE_API_VERSION_3_1
+#define AUDIO_DEVICE_API_VERSION_CURRENT AUDIO_DEVICE_API_VERSION_3_0
 /* Minimal audio HAL version supported by the audio framework */
 #define AUDIO_DEVICE_API_VERSION_MIN AUDIO_DEVICE_API_VERSION_2_0
 
@@ -551,36 +550,6 @@ struct audio_stream_in {
                                   size_t *mic_count);
 
     /**
-     * Called by the framework to instruct the HAL to optimize the capture stream in the
-     * specified direction.
-     *
-     * \param[in] stream    the stream object.
-     * \param[in] direction The direction constant (from audio-base.h)
-     *   MIC_DIRECTION_UNSPECIFIED  Don't do any directionality processing of the
-     *      activated microphone(s).
-     *   MIC_DIRECTION_FRONT        Optimize capture for audio coming from the screen-side
-     *      of the device.
-     *   MIC_DIRECTION_BACK         Optimize capture for audio coming from the side of the
-     *      device opposite the screen.
-     *   MIC_DIRECTION_EXTERNAL     Optimize capture for audio coming from an off-device
-     *      microphone.
-     * \return OK if the call is successful, an error code otherwise.
-     */
-    int (*set_microphone_direction)(const struct audio_stream_in *stream,
-                                    audio_microphone_direction_t direction);
-
-    /**
-     * Called by the framework to specify to the HAL the desired zoom factor for the selected
-     * microphone(s).
-     *
-     * \param[in] stream    the stream object.
-     * \param[in] zoom      the zoom factor.
-     * \return OK if the call is successful, an error code otherwise.
-     */
-    int (*set_microphone_field_dimension)(const struct audio_stream_in *stream,
-                                          float zoom);
-
-    /**
      * Called when the metadata of the stream's sink has been changed.
      * @param sink_metadata Description of the audio that is recorded by the clients.
      */
@@ -826,31 +795,6 @@ struct audio_hw_device {
     int (*set_audio_port_config)(struct audio_hw_device *dev,
                          const struct audio_port_config *config);
 
-    /**
-     * Applies an audio effect to an audio device.
-     *
-     * @param dev the audio HAL device context.
-     * @param device identifies the sink or source device the effect must be applied to.
-     *               "device" is the audio_port_handle_t indicated for the device when
-     *               the audio patch connecting that device was created.
-     * @param effect effect interface handle corresponding to the effect being added.
-     * @return retval operation completion status.
-     */
-    int (*add_device_effect)(struct audio_hw_device *dev,
-                        audio_port_handle_t device, effect_handle_t effect);
-
-    /**
-     * Stops applying an audio effect to an audio device.
-     *
-     * @param dev the audio HAL device context.
-     * @param device identifies the sink or source device this effect was applied to.
-     *               "device" is the audio_port_handle_t indicated for the device when
-     *               the audio patch is created.
-     * @param effect effect interface handle corresponding to the effect being removed.
-     * @return retval operation completion status.
-     */
-    int (*remove_device_effect)(struct audio_hw_device *dev,
-                        audio_port_handle_t device, effect_handle_t effect);
 };
 typedef struct audio_hw_device audio_hw_device_t;
 
