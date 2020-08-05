@@ -14,14 +14,11 @@
  * limitations under the License.
  */
 
-//#define LOG_NDEBUG 0
-#define LOG_TAG "EnumConverter"
-
 #include "enum_converter.h"
 
-#include <cerrno>
+#include <errno.h>
 
-#include "common.h"
+#include "../common.h"
 
 namespace v4l2_camera_hal {
 
