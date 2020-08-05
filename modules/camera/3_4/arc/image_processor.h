@@ -6,12 +6,14 @@
 #ifndef HAL_USB_IMAGE_PROCESSOR_H_
 #define HAL_USB_IMAGE_PROCESSOR_H_
 
-#include <camera/CameraMetadata.h>
+#include <string>
+
 // FourCC pixel formats (defined as V4L2_PIX_FMT_*).
 #include <linux/videodev2.h>
 // Declarations of HAL_PIXEL_FORMAT_XXX.
 #include <system/graphics.h>
 
+#include <camera/CameraMetadata.h>
 #include "frame_buffer.h"
 
 namespace arc {

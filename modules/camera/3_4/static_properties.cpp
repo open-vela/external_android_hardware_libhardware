@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-// #define LOG_NDEBUG 0
-#define LOG_TAG "StaticProperties"
-
 #include "static_properties.h"
 
+// #define LOG_NDEBUG 0
+#define LOG_TAG "StaticProperties"
 #include <cutils/log.h>
 #include <hardware/camera3.h>
 #include <system/camera.h>
@@ -277,11 +276,11 @@ bool StaticProperties::SanityCheckStreamConfiguration(
   for (size_t i = 0; i < stream_config->num_streams; ++i) {
     const camera3_stream_t* stream = stream_config->streams[i];
     if (stream == nullptr) {
-      ALOGE("%s: Stream %zu is null", __func__, i);
+      ALOGE("%s: Stream %d is null", __func__, i);
       return false;
     } else if (!IsInputType(stream->stream_type) &&
                !IsOutputType(stream->stream_type)) {
-      ALOGE("%s: Stream %zu type %d is neither an input nor an output type",
+      ALOGE("%s: Stream %d type %d is neither an input nor an output type",
             __func__,
             i,
             stream->stream_type);
@@ -295,7 +294,7 @@ bool StaticProperties::SanityCheckStreamConfiguration(
 bool StaticProperties::InputStreamsSupported(
     const camera3_stream_configuration_t* stream_config) {
   // Find the input stream(s).
-  int32_t num_input_streams = 0;
+  size_t num_input_streams = 0;
   int input_format = -1;
   for (size_t i = 0; i < stream_config->num_streams; ++i) {
     const camera3_stream_t* stream = stream_config->streams[i];
@@ -371,10 +370,10 @@ bool StaticProperties::InputStreamsSupported(
 bool StaticProperties::OutputStreamsSupported(
     const camera3_stream_configuration_t* stream_config) {
   // Find and count output streams.
-  int32_t num_raw = 0;
-  int32_t num_stalling = 0;
-  int32_t num_non_stalling = 0;
-  for (size_t i = 0; i < stream_config->num_streams; ++i) {
+  size_t num_raw = 0;
+  size_t num_stalling = 0;
+  size_t num_non_stalling = 0;
+  for (int i = 0; i < stream_config->num_streams; ++i) {
     const camera3_stream_t* stream = stream_config->streams[i];
     if (IsOutputType(stream->stream_type)) {
       // Check that this stream is valid as an output.
@@ -414,7 +413,7 @@ bool StaticProperties::OutputStreamsSupported(
   } else if (num_stalling > max_stalling_output_streams_) {
     ALOGE(
         "%s: Requested stream configuration exceeds maximum supported "
-        "stalling output streams %d (requested %u).",
+        "stalling output streams %d (requested %d).",
         __func__,
         max_stalling_output_streams_,
         num_stalling);

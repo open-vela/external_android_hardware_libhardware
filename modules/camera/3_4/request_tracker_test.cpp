@@ -16,9 +16,15 @@
 
 #include "request_tracker.h"
 
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+using testing::AtMost;
+using testing::Expectation;
+using testing::Return;
+using testing::SetArgPointee;
 using testing::Test;
+using testing::_;
 
 namespace default_camera_hal {
 
@@ -29,11 +35,7 @@ class RequestTrackerTest : public Test {
     stream2_.max_buffers = 3;
     dut_.reset(new RequestTracker());
     streams_ = {&stream1_, &stream2_};
-    camera3_stream_configuration_t config{
-        static_cast<uint32_t>(streams_.size()),
-        streams_.data(),
-        0,
-        nullptr};
+    camera3_stream_configuration_t config{static_cast<uint32_t>(streams_.size()), streams_.data(), 0};
     dut_->SetStreamConfiguration(config);
   }
 
