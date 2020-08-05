@@ -455,7 +455,6 @@ int Camera::preprocessCaptureBuffer(camera3_stream_buffer_t *buffer)
                     __func__, mId, strerror(-res), res);
             return res;
         }
-        ::close(buffer->acquire_fence);
     }
 
     // Acquire fence has been waited upon.
@@ -500,7 +499,7 @@ void Camera::sendResult(std::shared_ptr<CaptureRequest> request) {
     camera3_capture_result_t result {
         request->frame_number,
         request->settings.getAndLock(),
-        static_cast<uint32_t>(request->output_buffers.size()),
+        request->output_buffers.size(),
         request->output_buffers.data(),
         request->input_buffer.get(),
         1  // Total result; only 1 part.

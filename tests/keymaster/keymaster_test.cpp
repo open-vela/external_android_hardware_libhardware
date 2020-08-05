@@ -23,7 +23,6 @@
 
 #include <fstream>
 #include <iostream>
-#include <memory>
 
 #include <gtest/gtest.h>
 
@@ -34,18 +33,20 @@
 #define LOG_TAG "keymaster_test"
 #include <utils/Log.h>
 
+#include <UniquePtr.h>
+
 #include <hardware/keymaster0.h>
 
 namespace android {
 
-class UniqueBlob : public std::unique_ptr<uint8_t[]> {
+class UniqueBlob : public UniquePtr<uint8_t[]> {
 public:
     explicit UniqueBlob(size_t length) :
             mLength(length) {
     }
 
     UniqueBlob(uint8_t* bytes, size_t length) :
-            std::unique_ptr<uint8_t[]>(bytes), mLength(length) {
+            UniquePtr<uint8_t[]>(bytes), mLength(length) {
     }
 
     bool operator==(const UniqueBlob &other) const {
@@ -163,35 +164,35 @@ struct BIGNUM_Delete {
         BN_free(p);
     }
 };
-typedef std::unique_ptr<BIGNUM, BIGNUM_Delete> Unique_BIGNUM;
+typedef UniquePtr<BIGNUM, BIGNUM_Delete> Unique_BIGNUM;
 
 struct EVP_PKEY_Delete {
     void operator()(EVP_PKEY* p) const {
         EVP_PKEY_free(p);
     }
 };
-typedef std::unique_ptr<EVP_PKEY, EVP_PKEY_Delete> Unique_EVP_PKEY;
+typedef UniquePtr<EVP_PKEY, EVP_PKEY_Delete> Unique_EVP_PKEY;
 
 struct PKCS8_PRIV_KEY_INFO_Delete {
     void operator()(PKCS8_PRIV_KEY_INFO* p) const {
         PKCS8_PRIV_KEY_INFO_free(p);
     }
 };
-typedef std::unique_ptr<PKCS8_PRIV_KEY_INFO, PKCS8_PRIV_KEY_INFO_Delete> Unique_PKCS8_PRIV_KEY_INFO;
+typedef UniquePtr<PKCS8_PRIV_KEY_INFO, PKCS8_PRIV_KEY_INFO_Delete> Unique_PKCS8_PRIV_KEY_INFO;
 
 struct RSA_Delete {
     void operator()(RSA* p) const {
         RSA_free(p);
     }
 };
-typedef std::unique_ptr<RSA, RSA_Delete> Unique_RSA;
+typedef UniquePtr<RSA, RSA_Delete> Unique_RSA;
 
 struct EC_KEY_Delete {
     void operator()(EC_KEY* p) const {
         EC_KEY_free(p);
     }
 };
-typedef std::unique_ptr<EC_KEY, EC_KEY_Delete> Unique_EC_KEY;
+typedef UniquePtr<EC_KEY, EC_KEY_Delete> Unique_EC_KEY;
 
 
 /*
@@ -649,6 +650,9 @@ TEST_F(KeymasterTest, GetKeypairPublic_EC_Success) {
 }
 
 TEST_F(KeymasterTest, GetKeypairPublic_NullKey_Failure) {
+    uint8_t* key_blob;
+    size_t key_blob_length;
+
     uint8_t* x509_data = NULL;
     size_t x509_data_length;
     ASSERT_EQ(-1,
@@ -1029,6 +1033,9 @@ TEST_F(KeymasterTest, SignData_RSA_Raw_NullOutput_Failure) {
             .digest_type = DIGEST_NONE,
             .padding_type = PADDING_NONE,
     };
+
+    uint8_t* sig;
+    size_t sig_length;
 
     UniqueReadOnlyBlob testData(TEST_RSA_KEY_1, sizeof(TEST_RSA_KEY_1));
     ASSERT_TRUE(testData.get() != NULL);

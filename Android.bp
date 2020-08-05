@@ -5,14 +5,10 @@ cc_library_headers {
     header_libs: [
         "libaudio_system_headers",
         "libsystem_headers",
-        "libcutils_headers",
-        "libbluetooth-types-header",
     ],
     export_header_lib_headers: [
         "libaudio_system_headers",
-        "libsystem_headers",
-        "libcutils_headers",
-        "libbluetooth-types-header",
+        "libsystem_headers"
     ],
 
     export_include_dirs: ["include"],
@@ -29,18 +25,15 @@ cc_library_shared {
         "libdl",
         "libvndksupport",
     ],
-    cflags: [
-        "-DQEMU_HARDWARE",
-        "-Wall",
-        "-Werror",
-    ],
+    cflags: ["-DQEMU_HARDWARE"],
 
     header_libs: ["libhardware_headers"],
     export_header_lib_headers: ["libhardware_headers"],
 
     vendor_available: true,
-    vndk: {
-        enabled: true,
-        support_system_process: true,
-    },
 }
+
+subdirs = [
+    "modules/*",
+    "tests/*",
+]

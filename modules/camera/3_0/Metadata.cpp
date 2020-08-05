@@ -16,8 +16,6 @@
 //#define LOG_NDEBUG 0
 #define LOG_TAG "Metadata"
 
-#include <errno.h>
-
 #include <system/camera_metadata.h>
 
 #include <log/log.h>

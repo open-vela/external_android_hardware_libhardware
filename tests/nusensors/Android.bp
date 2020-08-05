@@ -3,8 +3,6 @@ cc_binary {
 
     srcs: ["nusensors.cpp"],
 
-    cflags: ["-Wall", "-Werror"],
-
     shared_libs: [
         "libcutils",
         "libhardware",
