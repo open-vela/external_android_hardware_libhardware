@@ -123,7 +123,16 @@ void V4L2Camera::disconnect() {
 
 int V4L2Camera::flushBuffers() {
   HAL_LOG_ENTER();
-  return device_->StreamOff();
+
+  int res = device_->StreamOff();
+
+  // This is not strictly necessary, but prevents a buildup of aborted
+  // requests in the in_flight_ map. These should be cleared
+  // whenever the stream is turned off.
+  std::lock_guard<std::mutex> guard(in_flight_lock_);
+  in_flight_.clear();
+
+  return res;
 }
 
 int V4L2Camera::initStaticInfo(android::CameraMetadata* out) {
@@ -253,55 +262,65 @@ bool V4L2Camera::enqueueRequestBuffers() {
   }
 
   // Actually enqueue the buffer for capture.
-  res = device_->EnqueueRequest(request);
-  if (res) {
-    HAL_LOGE("Device failed to enqueue buffer.");
-    completeRequest(request, res);
-    return true;
+  {
+    std::lock_guard<std::mutex> guard(in_flight_lock_);
+
+    uint32_t index;
+    res = device_->EnqueueBuffer(&request->output_buffers[0], &index);
+    if (res) {
+      HAL_LOGE("Device failed to enqueue buffer.");
+      completeRequest(request, res);
+      return true;
+    }
+
+    // Make sure the stream is on (no effect if already on).
+    res = device_->StreamOn();
+    if (res) {
+      HAL_LOGE("Device failed to turn on stream.");
+      // Don't really want to send an error for only the request here,
+      // since this is a full device error.
+      // TODO: Should trigger full flush.
+      return true;
+    }
+
+    // Note: the request should be dequeued/flushed from the device
+    // before removal from in_flight_.
+    in_flight_.emplace(index, request);
+    buffers_in_flight_.notify_one();
   }
 
-  // Make sure the stream is on (no effect if already on).
-  res = device_->StreamOn();
-  if (res) {
-    HAL_LOGE("Device failed to turn on stream.");
-    // Don't really want to send an error for only the request here,
-    // since this is a full device error.
-    // TODO: Should trigger full flush.
-    return true;
-  }
-
-  std::unique_lock<std::mutex> lock(in_flight_lock_);
-  in_flight_buffer_count_++;
-  buffers_in_flight_.notify_one();
   return true;
 }
 
 bool V4L2Camera::dequeueRequestBuffers() {
   // Dequeue a buffer.
-  std::shared_ptr<default_camera_hal::CaptureRequest> request;
-  int res;
-
-  {
-    std::unique_lock<std::mutex> lock(in_flight_lock_);
-    res = device_->DequeueRequest(&request);
-    if (!res) {
-      if (request) {
-        completeRequest(request, res);
-        in_flight_buffer_count_--;
+  uint32_t result_index;
+  int res = device_->DequeueBuffer(&result_index);
+  if (res) {
+    if (res == -EAGAIN) {
+      // EAGAIN just means nothing to dequeue right now.
+      // Wait until something is available before looping again.
+      std::unique_lock<std::mutex> lock(in_flight_lock_);
+      while (in_flight_.empty()) {
+        buffers_in_flight_.wait(lock);
       }
-      return true;
+    } else {
+      HAL_LOGW("Device failed to dequeue buffer: %d", res);
     }
+    return true;
   }
 
-  if (res == -EAGAIN) {
-    // EAGAIN just means nothing to dequeue right now.
-    // Wait until something is available before looping again.
-    std::unique_lock<std::mutex> lock(in_flight_lock_);
-    while (in_flight_buffer_count_ == 0) {
-      buffers_in_flight_.wait(lock);
-    }
+  // Find the associated request and complete it.
+  std::lock_guard<std::mutex> guard(in_flight_lock_);
+  auto index_request = in_flight_.find(result_index);
+  if (index_request != in_flight_.end()) {
+    completeRequest(index_request->second, 0);
+    in_flight_.erase(index_request);
   } else {
-    HAL_LOGW("Device failed to dequeue buffer: %d", res);
+    HAL_LOGW(
+        "Dequeued non in-flight buffer index %d. "
+        "This buffer may have been flushed from the HAL but not the device.",
+        index_request->first);
   }
   return true;
 }
@@ -327,11 +346,10 @@ int V4L2Camera::setupStreams(camera3_stream_configuration_t* stream_config) {
 
   std::lock_guard<std::mutex> guard(in_flight_lock_);
   // The framework should be enforcing this, but doesn't hurt to be safe.
-  if (device_->GetInFlightBufferCount() != 0) {
+  if (!in_flight_.empty()) {
     HAL_LOGE("Can't set device format while frames are in flight.");
     return -EINVAL;
   }
-  in_flight_buffer_count_ = 0;
 
   // stream_config should have been validated; assume at least 1 stream.
   camera3_stream_t* stream = stream_config->streams[0];
@@ -390,11 +408,6 @@ int V4L2Camera::setupStreams(camera3_stream_configuration_t* stream_config) {
   // Set all the streams dataspaces, usages, and max buffers.
   for (uint32_t i = 0; i < stream_config->num_streams; ++i) {
     stream = stream_config->streams[i];
-
-    // Override HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED format.
-    if (stream->format == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED) {
-      stream->format = HAL_PIXEL_FORMAT_RGBA_8888;
-    }
 
     // Max buffers as reported by the device.
     stream->max_buffers = max_buffers;

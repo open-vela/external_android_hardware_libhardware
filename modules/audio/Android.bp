@@ -23,7 +23,6 @@ cc_library_shared {
     relative_install_path: "hw",
     proprietary: true,
     srcs: ["audio_hw.c"],
-    header_libs: ["libhardware_headers"],
     shared_libs: [
         "liblog",
     ],
@@ -41,7 +40,6 @@ cc_library_shared {
     relative_install_path: "hw",
     proprietary: true,
     srcs: ["audio_hw.c"],
-    header_libs: ["libhardware_headers"],
     shared_libs: [
         "liblog",
     ],
@@ -55,7 +53,6 @@ cc_library_shared {
     relative_install_path: "hw",
     proprietary: true,
     srcs: ["audio_policy.c"],
-    header_libs: ["libhardware_headers"],
     shared_libs: [
         "liblog",
     ],
