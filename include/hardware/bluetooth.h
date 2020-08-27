@@ -454,9 +454,8 @@ typedef struct {
     /**
      * Opens the interface and provides the callback routines
      * to the implemenation of this interface.
-     * The |is_atv| flag indicates whether the local device is an Android TV
      */
-    int (*init)(bt_callbacks_t* callbacks, bool is_atv);
+    int (*init)(bt_callbacks_t* callbacks );
 
     /** Enable Bluetooth. */
     int (*enable)(bool guest_mode);
