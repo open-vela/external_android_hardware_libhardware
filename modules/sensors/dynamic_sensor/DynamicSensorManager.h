@@ -111,7 +111,6 @@ private:
     // available sensor handle space
     const std::pair<int, int> mHandleRange;
     sensor_t mMetaSensor;
-    bool mMetaSensorActive = false;
 
     // immutable pointer to event callback, used in extention mode.
     SensorEventCallback * const mCallback;
