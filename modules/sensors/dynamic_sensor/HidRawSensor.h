@@ -86,7 +86,6 @@ private:
         size_t fifoMaxSize;
         uint32_t reportModeFlag;
         bool isWakeUp;
-        bool useUniqueIdForUuid;
 
         // dynamic sensor specific
         std::string uniqueId;
