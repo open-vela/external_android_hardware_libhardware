@@ -121,14 +121,6 @@ private:
     // helper function to find sensor control feature usage from packets
     bool findSensorControlUsage(const std::vector<HidParser::ReportPacket> &packets);
 
-    // try to parse sensor description feature value to see if it matches any
-    // known sensors
-    void detectSensorFromDescription(const std::string &description);
-
-    // try to parse sensor description feature value to see if it matches the
-    // Android header tracker sensor
-    bool detectAndroidHeadTrackerSensor(const std::string &description);
-
     // try to parse sensor description feature value to see if it matches
     // android specified custom sensor definition.
     bool detectAndroidCustomSensor(const std::string &description);
@@ -145,20 +137,14 @@ private:
 
     // Features for control sensor
     int mReportingStateId;
-    unsigned int mReportingStateBitOffset;
-    unsigned int mReportingStateBitSize;
-    int mReportingStateDisableIndex;
-    int mReportingStateEnableIndex;
+    unsigned int mReportingStateOffset;
 
     int mPowerStateId;
-    unsigned int mPowerStateBitOffset;
-    unsigned int mPowerStateBitSize;
-    int mPowerStateOffIndex;
-    int mPowerStateOnIndex;
+    unsigned int mPowerStateOffset;
 
     int mReportIntervalId;
-    unsigned int mReportIntervalBitOffset;
-    unsigned int mReportIntervalBitSize;
+    unsigned int mReportIntervalOffset;
+    unsigned int mReportIntervalSize;
 
     // Input report translate table
     std::vector<ReportTranslateRecord> mTranslateTable;
