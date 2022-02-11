@@ -248,7 +248,6 @@ std::vector<HidParser::ReportPacket> HidParser::convertGroupToPacket(
                 ReportItem digest = {
                     .usage = r.getFullUsage(),
                     .id = id,
-                    .usageVector = r.getUsageVector(),
                     .minRaw = logical.first,
                     .maxRaw = logical.second,
                     .a = scale,
@@ -317,5 +316,4 @@ std::ostream& operator<<(std::ostream &os, const HidParser::DigestVector &digest
     os << LOG_ENDL;
     return os;
 }
-
 } // namespace HidUtil
