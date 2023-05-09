@@ -30,7 +30,7 @@ extern "C" {
  * a type, by using the high four bits (of an implied 32-bit unsigned enum value) to specify up to
  * 16 data types.  These values are ORed with tag IDs to generate the final tag ID values.
  */
-typedef enum {
+typedef enum : int32_t {
     KM_INVALID = 0 << 28, /* Invalid type, used to designate a tag as uninitialized */
     KM_ENUM = 1 << 28,
     KM_ENUM_REP = 2 << 28, /* Repeatable enumeration value. */
@@ -44,7 +44,7 @@ typedef enum {
     KM_ULONG_REP = 10 << 28, /* Repeatable long value */
 } keymaster_tag_type_t;
 
-typedef enum {
+typedef enum : int32_t {
     KM_TAG_INVALID = KM_INVALID | 0,
 
     /*
@@ -220,7 +220,7 @@ typedef enum {
  * Algorithms that may be provided by keymaster implementations.  Those that must be provided by all
  * implementations are tagged as "required".
  */
-typedef enum {
+typedef enum : uint32_t {
     /* Asymmetric algorithms. */
     KM_ALGORITHM_RSA = 1,
     // KM_ALGORITHM_DSA = 2, -- Removed, do not re-use value 2.
@@ -237,7 +237,7 @@ typedef enum {
 /**
  * Symmetric block cipher modes provided by keymaster implementations.
  */
-typedef enum {
+typedef enum : uint32_t {
     /* Unauthenticated modes, usable only for encryption/decryption and not generally recommended
      * except for compatibility with existing other protocols. */
     KM_MODE_ECB = 1,
@@ -255,7 +255,7 @@ typedef enum {
  * provide all possible combinations of algorithm and padding, only the
  * cryptographically-appropriate pairs.
  */
-typedef enum {
+typedef enum : uint32_t {
     KM_PAD_NONE = 1, /* deprecated */
     KM_PAD_RSA_OAEP = 2,
     KM_PAD_RSA_PSS = 3,
@@ -267,7 +267,7 @@ typedef enum {
 /**
  * Digests provided by keymaster implementations.
  */
-typedef enum {
+typedef enum : uint32_t {
     KM_DIGEST_NONE = 0,
     KM_DIGEST_MD5 = 1, /* Optional, may not be implemented in hardware, will be handled in software
                         * if needed. */
@@ -281,7 +281,7 @@ typedef enum {
 /*
  * Key derivation functions, mostly used in ECIES.
  */
-typedef enum {
+typedef enum : uint32_t {
     /* Do not apply a key derivation function; use the raw agreed key */
     KM_KDF_NONE = 0,
     /* HKDF defined in RFC 5869 with SHA256 */
@@ -299,7 +299,7 @@ typedef enum {
 /**
  * Supported EC curves, used in ECDSA/ECIES.
  */
-typedef enum {
+typedef enum : uint32_t {
     KM_EC_CURVE_P_224 = 0,
     KM_EC_CURVE_P_256 = 1,
     KM_EC_CURVE_P_384 = 2,
@@ -313,7 +313,7 @@ typedef enum {
  * is hardware or software-based.  Specifically, a key with KM_ORIGIN_GENERATED in the
  * hardware-enforced list is guaranteed never to have existed outide the secure hardware.
  */
-typedef enum {
+typedef enum : uint32_t {
     KM_ORIGIN_GENERATED = 0, /* Generated in keymaster.  Should not exist outside the TEE. */
     KM_ORIGIN_DERIVED = 1,   /* Derived inside keymaster.  Likely exists off-device. */
     KM_ORIGIN_IMPORTED = 2,  /* Imported into keymaster.  Existed as cleartext in Android. */
@@ -330,7 +330,7 @@ typedef enum {
  * available, and should have BLOB_REQUIRES_FILE_SYSTEM.  Other requirements entries will be added
  * as needed for implementations.
  */
-typedef enum {
+typedef enum : uint32_t {
     KM_BLOB_STANDALONE = 0,
     KM_BLOB_REQUIRES_FILE_SYSTEM = 1,
 } keymaster_key_blob_usage_requirements_t;
@@ -338,7 +338,7 @@ typedef enum {
 /**
  * Possible purposes of a key (or pair).
  */
-typedef enum {
+typedef enum : uint32_t {
     KM_PURPOSE_ENCRYPT = 0,    /* Usable with RSA, EC and AES keys. */
     KM_PURPOSE_DECRYPT = 1,    /* Usable with RSA, EC and AES keys. */
     KM_PURPOSE_SIGN = 2,       /* Usable with RSA, EC and HMAC keys. */
@@ -393,7 +393,7 @@ typedef struct {
     size_t entry_count;
 } keymaster_cert_chain_t;
 
-typedef enum {
+typedef enum : uint32_t {
     KM_VERIFIED_BOOT_VERIFIED = 0,    /* Full chain of trust extending from the bootloader to
                                        * verified partitions, including the bootloader, boot
                                        * partition, and all verified partitions*/
@@ -412,7 +412,7 @@ typedef enum {
                                        * completeness. */
 } keymaster_verified_boot_t;
 
-typedef enum {
+typedef enum : uint32_t {
     KM_SECURITY_LEVEL_SOFTWARE = 0,
     KM_SECURITY_LEVEL_TRUSTED_ENVIRONMENT = 1,
     KM_SECURITY_LEVEL_STRONGBOX = 2,
@@ -421,7 +421,7 @@ typedef enum {
 /**
  * Formats for key import and export.
  */
-typedef enum {
+typedef enum : uint32_t {
     KM_KEY_FORMAT_X509 = 0,  /* for public key export */
     KM_KEY_FORMAT_PKCS8 = 1, /* for asymmetric key pair import */
     KM_KEY_FORMAT_RAW = 3,   /* for symmetric key import and export*/
@@ -435,7 +435,7 @@ typedef enum {
  */
 typedef uint64_t keymaster_operation_handle_t;
 
-typedef enum {
+typedef enum : int32_t {
     KM_ERROR_OK = 0,
     KM_ERROR_ROOT_OF_TRUST_ALREADY_SET = -1,
     KM_ERROR_UNSUPPORTED_PURPOSE = -2,
