@@ -15,5 +15,5 @@
 # limitations under the License.
 #
 ifneq ($(CONFIG_ANDROID_LIBHARDWARE),)
-CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" $(APPDIR)/external/android/hardware/libhardware/include}
+CXXFLAGS += ${INCDIR_PREFIX}$(APPDIR)/external/android/hardware/libhardware/include
 endif
